@@ -1,22 +1,15 @@
 import { DataTable, type ColumnDefinition } from '@/lib/components/Table';
-import type { FormFieldExtended, Ingredient } from '@/utils/schema';
+import type { DialogData, FormFieldExtended, Ingredient, PantryItem, UnitExtended } from '@/utils/schema';
 import { useState } from 'react';
 import DataDialog from '../components/Dialog';
 import { Button } from '@/components/ui/button';
 import { useFirestore } from '../context/Firebase';
+import { reduceQuantity } from '@/utils/quantity';
 
 
-type DialogData = {
-    title: string;
-    description?: string;
-    initialData?: Partial<Ingredient>;
-    dialogType: 'create' | 'update';
-    fields: FormFieldExtended[];
-
-}
 
 function Pantry() {
-    const [dialog, setDialog] = useState<DialogData>({
+    const [dialog, setDialog] = useState<DialogData<Ingredient>>({
         title: '',
         description: '',
         initialData: undefined,
@@ -27,7 +20,7 @@ function Pantry() {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     // const [removeQuantity, setRemoveQuantity] = useState(1);
 
-    const { data, createData, updateData } = useFirestore<Ingredient>();
+    const { data, createData, updateData, deleteData } = useFirestore<Ingredient>();
 
     const pantryColumns: ColumnDefinition<Ingredient>[] = [
         { header: "Name", accessorKey: "name" },
@@ -90,20 +83,23 @@ function Pantry() {
             ]  
         },
         {
-            name: 'unit', label: 'Unit', type: 'select',
-            options: [
-                { value: 'g', label: 'g' },
-                { value: 'kg', label: 'kg' },
-                { value: 'ml', label: 'ml' },
-                { value: 'l', label: 'L' },
-                { value: 'unit', label: 'unit(s)' },
-                { value: 'Tbs', label: 'tbsp' },
-                { value: 'tsp', label: 'tsp' },
-                { value: 'pinch', label: 'pinch' },
-                { value: 'cup' , label: 'cup' },
-                { value: 'oz', label: 'oz' },
-                { value: 'lb', label: 'lb' },
-            ]
+            name: 'reduce_quantity', label: 'Quantity', type: 'quantity', 
+            min: 0, step: 0.01, required: false, 
+            placeholder: 'e.g., 500', extraFields:[{
+                name: 'reduce_unit', label: 'Unit', type: 'select',
+                options: [
+                    { value: 'g', label: 'g' },
+                    { value: 'kg', label: 'kg' },
+                    { value: 'ml', label: 'ml' },
+                    { value: 'l', label: 'L' },
+                    { value: 'unit', label: 'unit(s)' },
+                    { value: 'Tbs', label: 'tbsp' },
+                    { value: 'tsp', label: 'tsp' },
+                    { value: 'cup' , label: 'cup' },
+                    { value: 'oz', label: 'oz' },
+                    { value: 'lb', label: 'lb' },
+                ]
+            }]
         }]
     }
 
@@ -127,7 +123,6 @@ function Pantry() {
     }
 
     const openEditDialog = (ingredient: Ingredient) => {
-        console.log(ingredient)
         setDialog({ 
             title: 'Edit Item', 
             dialogType: 'update', 
@@ -137,13 +132,37 @@ function Pantry() {
         setIsDialogOpen(true);
     }
 
-    const handleSaveIngredient = async (data: Omit<Ingredient, 'id'>) => {
+    const handleReduceQuantity = (data: PantryItem): PantryItem => {
+        if (!("reduce_quantity" in data && "reduce_unit" in data)) return data;
+        
+        const { val, unit} = reduceQuantity(
+            data.quantity, 
+            data.unit, 
+            data.reduce_quantity as number, 
+            data.reduce_unit as UnitExtended
+        )
+
+        delete data.reduce_quantity;
+        delete data.reduce_unit;
+
+        return {
+            ...data,
+            quantity: val,
+            unit: unit
+        }
+    }
+
+    const handleSaveIngredient = async (data: Omit<PantryItem, 'id'>) => {
+        data = handleReduceQuantity(data);
         try {
             if (dialog.dialogType === 'create') {
                 await createData(data);
             }
 
-            if (dialog.dialogType === 'update') {
+            if (dialog.dialogType === 'update' && data.quantity <= 0) {
+                await deleteData(dialog.initialData?.id as string | undefined);
+            }
+            else if (dialog.dialogType === 'update') {
                 await updateData(data, dialog.initialData?.id as string | undefined);
             }
 

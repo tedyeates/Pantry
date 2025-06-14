@@ -1,9 +1,9 @@
 
 import convert, { type Unit } from 'convert-units';
-import type { UnitExtended } from './schema';
+import type { QuantityReturnType, UnitExtended } from './schema';
 
 
-function calculateQuantity(currentQuantity: number, reduceQuantity: number) {
+function calculateQuantity(currentQuantity: number, reduceQuantity: number): number {
     let newQuantity = currentQuantity - reduceQuantity
 
     if (newQuantity < 0) {
@@ -13,76 +13,113 @@ function calculateQuantity(currentQuantity: number, reduceQuantity: number) {
     return newQuantity
 }
 
-export function convertQuantity(
-    currentQuantity: number, 
-    currentUnit: UnitExtended, 
-    reduceQuantity: number, 
-    reduceUnit: UnitExtended
-) {
-    const disallowedStorageUnits = new Set<Partial<UnitExtended>>([
-        "cup", "tsp", "Tbs", "tbsp", "pinch"
-    ])
+function convertUnitMassToVolume(convertFromUnit: UnitExtended) {
+    const convertedUnits = {
+        "g": "ml",
+        "kg": "l",
+    } as Record<UnitExtended, UnitExtended>
+
+    if (convertFromUnit in convertedUnits) {
+        return convertedUnits[convertFromUnit]
+    }
+
+    throw new Error(`Not implemented unit conversion ${convertFromUnit}`)
+}
+
+function convertToDifferentUnit(convertFromUnit: UnitExtended, convertToUnit: UnitExtended, quantity: number) {
+    if (convertFromUnit === convertToUnit) {
+        return { val: quantity, unit: convertToUnit }
+    }
 
     const massUnits = new Set(convert().possibilities("mass"))
     const volumeUnits = new Set(convert().possibilities("volume"))
+
+    const convertFromIsMass = massUnits.has(convertFromUnit as Unit)
+    const convertToIsMass = massUnits.has(convertToUnit as Unit)
+    const convertFromIsVolume = volumeUnits.has(convertFromUnit as Unit)
+    const convertToIsVolume = volumeUnits.has(convertToUnit as Unit)
+
+    let newConvertFromUnit = convertFromUnit
+    if (convertFromIsMass && convertToIsVolume) {
+        newConvertFromUnit = convertUnitMassToVolume(convertFromUnit)
+    }
+
+    let newConvertToUnit = convertToUnit
+    if (convertFromIsVolume && convertToIsMass) {
+        newConvertToUnit = convertUnitMassToVolume(convertToUnit)
+    }
+    
+
+    return {
+        val: convert(quantity)
+            .from(newConvertFromUnit as Unit)
+            .to(newConvertToUnit as Unit),
+        unit: convertToUnit
+    }
+}
+
+function round(quantity: number) {
+    return Math.round(quantity * 100) / 100
+}
+
+function simplifyQuantity(quantity: number, oldUnit: UnitExtended): QuantityReturnType {
+    if (quantity < 1 && quantity > 0) {
+        const { val, unit } = convert(quantity).from(oldUnit as Unit).toBest() as QuantityReturnType
+        return {val: round(val), unit}
+    }
+
+    return {val: round(quantity), unit: oldUnit}
+}
+
+
+export function reduceQuantity(
+    currentQuantity: number, 
+    currentUnit: UnitExtended, 
+    subtractedQuantity: number, 
+    subtractedUnit: UnitExtended
+): QuantityReturnType {
+    const disallowedStorageUnits = new Set<Partial<UnitExtended>>([
+        "cup", "tsp", "Tbs", "tbsp"
+    ])
 
     // Can only store ingredients in mass e.g. g or volume e.g. ml
     if (disallowedStorageUnits.has(currentUnit)) {
         throw new Error("You can't store ingredients as that unit!")
     }
-    
-    if (currentUnit == "unit" && reduceUnit !== "unit") {
-        throw new Error("You can't convert unit into other measurements")
-    }
 
-    if (currentUnit == "unit"){
+    if (subtractedUnit === currentUnit) {
         return {
-            quantity: reduceQuantity,
-            unit: reduceUnit
+            val: calculateQuantity(currentQuantity, subtractedQuantity),
+            unit: currentUnit
         }
     }
 
-    // Convert library use tbs instead of tbsp
-    if (reduceUnit == "tbsp") {
-        reduceUnit = "Tbs"
+    if (subtractedUnit === "unit") {
+        throw new Error("You can't subtract units from a non unit measurement")
     }
 
-    // Add support for estimated conversion between mass and volume
-    // Americans love measuring flour in cups
-    let newUnit: string = currentUnit
-    const currentIsMass = massUnits.has(currentUnit as Unit)
-    const reduceIsVolume = volumeUnits.has(reduceUnit as Unit)
-    if (currentIsMass && reduceIsVolume) {
-        newUnit = {
-            "g": "ml",
-            "kg": "l",
-        }[currentUnit as "kg" | "g"]
+    if (currentUnit === "unit") {
+        throw new Error("You can't subtract non unit measurements from a unit measurement")
     }
 
-    if (newUnit !== reduceUnit) {
-        reduceQuantity = convert(reduceQuantity)
-            .from(reduceUnit as Unit)
-            .to(newUnit as Unit)
+    const { val } = convertToDifferentUnit(subtractedUnit, currentUnit, subtractedQuantity)
+    const newQuantity = calculateQuantity(currentQuantity, val)
+    return simplifyQuantity(newQuantity, currentUnit)
+}
+
+// Fix reduce quantity
+export function convertUnit(
+    quantity: number, 
+    oldUnit: UnitExtended, 
+    newUnit: UnitExtended
+) {
+    const unconvertableUnits = new Set(['unit', 'pinch'])
+    if (unconvertableUnits.has(oldUnit) || unconvertableUnits.has(newUnit)) {
+        return {
+            val: "",
+            unit: newUnit
+        }
     }
 
-
-    let newQuantity = calculateQuantity(currentQuantity, reduceQuantity)
-
-    // Convert back if previously converted from mass to volume
-    if (currentUnit !== newUnit) {
-        newUnit = {
-            "ml": "g",
-            "l": "g",
-        }[newUnit as "ml" | "l"]
-    }
-
-    // Convert from l/kg to ml/g if decimal
-    if (newQuantity < 1 && newQuantity > 0) {
-        const { val, unit } = convert(newQuantity).from(newUnit as Unit).toBest()
-        newQuantity = val
-        newUnit = unit
-    }
-
-
-    return [newQuantity, newUnit as Unit]
+    return convertToDifferentUnit(oldUnit, newUnit, quantity)
 }

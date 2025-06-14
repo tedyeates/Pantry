@@ -1,12 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import type { FormField, FormFieldExtended, SupportedFields } from "@/utils/schema";
+import type { FormField, FormFieldExtended, SupportedFields, UnitExtended } from "@/utils/schema";
 import { useCallback, useEffect, useState } from "react";
 import FieldSelect from "./fields/FieldSelect";
 import FieldInput from "./fields/FieldInput";
 import FieldQuantity from "./fields/FieldQuantity";
 import FieldReduceQuantity from "./fields/FieldReduceQuantity";
+import { convertUnit } from "@/utils/quantity";
 
 type DataDialogueProps<T> = {
     isOpen: boolean;
@@ -70,9 +71,27 @@ function DataDialog<T extends Record<string, SupportedFields>>({
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value, type } = e.target;
+
         setFormData((prevData) => ({
             ...prevData,
             [name]: type === 'number' ? parseFloat(value) : value,
+        }))
+    }
+
+    const handleUnitChange = (
+        quantity: number, 
+        oldUnit: UnitExtended, 
+        newUnit: UnitExtended,
+        field: FormFieldExtended
+    ) => {
+        const unitFieldName = field.extraFields?.[0].name
+        if (!unitFieldName) return
+
+        const {val, unit} = convertUnit(quantity, oldUnit, newUnit)
+        setFormData((prevData) => ({
+            ...prevData,
+            [field.name]: val,
+            [unitFieldName]: unit
         }))
     }
 
@@ -103,7 +122,7 @@ function DataDialog<T extends Record<string, SupportedFields>>({
                     field={field}
                     formData={formData}
                     handleInputChange={handleInputChange}
-                    handleSelectChange={handleSelectChange}
+                    handleUnitChange={handleUnitChange}
                     extraField={field.extraFields?.[0]}
                 />
             ),
@@ -112,7 +131,7 @@ function DataDialog<T extends Record<string, SupportedFields>>({
                     field={field}
                     formData={formData}
                     handleInputChange={handleInputChange}
-                    handleSelectChange={handleSelectChange}
+                    handleUnitChange={handleUnitChange}
                     extraFields={field.extraFields || []}
                 />
             ),

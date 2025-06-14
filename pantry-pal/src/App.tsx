@@ -3,7 +3,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import Pantry from './lib/pages/Pantry';
 import Recipes from './lib/pages/Recipes';
 import { FirestoreProvider } from './lib/context/Firebase';
-import type { Ingredient } from './utils/schema';
+import type { Ingredient, Recipe } from './utils/schema';
 
 // TODO: Add non anonymous auth
 function App() {
@@ -20,9 +20,11 @@ function App() {
                             <Pantry />
                         </TabsContent>
                     </FirestoreProvider>
-                    <TabsContent value="recipes">
-                        <Recipes />
-                    </TabsContent>
+                    <FirestoreProvider<Recipe> objectType="recipe">
+                        <TabsContent value="recipes">
+                            <Recipes />
+                        </TabsContent>
+                    </FirestoreProvider>
                 </Tabs>
         </main>
     )

@@ -1,4 +1,5 @@
 // src/components/ui/data-table.tsx
+import { Button } from '@/components/ui/button';
 import {
     Table,
     TableBody,
@@ -7,6 +8,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table'; // Adjust import path if necessary
+import { useFirestore } from '../context/Firebase';
 
 // Define a generic interface for column definitions
 // T is the type of the data object (e.g., PantryItem, Recipe)
@@ -33,6 +35,12 @@ export function DataTable<T extends { id: string | number }>({
     data,
     openEditDialog
 }: DataTableProps<T>) {
+    const { deleteData } = useFirestore<T>();
+
+    const onDelete = async (event: React.MouseEvent<HTMLButtonElement>, id: string) => {
+        event.stopPropagation();
+        await deleteData(id);
+    }
     return (
         <Table>
             <TableHeader>
@@ -47,14 +55,19 @@ export function DataTable<T extends { id: string | number }>({
                 data.map((item) => (
                     <TableRow onClick={() => openEditDialog(item)} key={item.id}> {/* Assuming each data item has a unique 'id' */}
                         {columns.map((column, colIndex) => (
-                        <TableCell key={column.accessorKey?.toString() || colIndex}>{column.accessorFn ? column.accessorFn(item) : item[column.accessorKey!] as string}</TableCell>
+                        <TableCell key={column.accessorKey?.toString() || colIndex}>
+                            {column.accessorFn ? column.accessorFn(item) : item[column.accessorKey!] as string}
+                        </TableCell>
                         ))}
+                        <TableCell className="flex justify-end">
+                            <Button variant="destructive" onClick={(event) => onDelete(event, String(item.id))}>Delete</Button>
+                        </TableCell> 
                     </TableRow>
                 ))
             ) : (
                 <TableRow>
                     <TableCell colSpan={columns.length}>No data available.</TableCell>
-                </TableRow>
+                </TableRow>// new delete button column
             )}
             </TableBody>
         </Table>

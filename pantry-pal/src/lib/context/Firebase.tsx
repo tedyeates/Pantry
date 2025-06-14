@@ -1,5 +1,5 @@
 import { onAuthStateChanged, signInAnonymously, signInWithCustomToken } from "firebase/auth";
-import { addDoc, collection, doc, onSnapshot, updateDoc } from 'firebase/firestore';
+import { addDoc, collection, deleteDoc, doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { createContext, useContext, useEffect, useState } from "react";
 import { auth, db } from "../../utils/firebase";
 import type { ObjectType } from "@/utils/schema";
@@ -10,6 +10,7 @@ type FirestoreContextValue<T> = {
     data: T[],
     createData: (data: Omit<T, 'id'>) => void,
     updateData: (data: Omit<T, 'id'>, id?: string) => void
+    deleteData: (id?: string) => void
 };
 
 const FirestoreContext = createContext<FirestoreContextValue<unknown>>({
@@ -18,6 +19,7 @@ const FirestoreContext = createContext<FirestoreContextValue<unknown>>({
     data: [],
     createData: () => {},
     updateData: () => {},
+    deleteData: () => {},
 })
 
 const initialAuthToken = null
@@ -87,7 +89,7 @@ function FirestoreProvider<T>({ children, objectType }: FirestoreProviderProps) 
     async function createData(data: Omit<T, 'id'>) {
         if (!userId) return;
 
-        const collectionRef = collection(db, `artifacts/${appId}/users/${userId}/pantry`);
+        const collectionRef = collection(db, `artifacts/${appId}/users/${userId}/${objectType}`);
         await addDoc(collectionRef, {
             ...data,
             createdAt: new Date(),
@@ -97,10 +99,17 @@ function FirestoreProvider<T>({ children, objectType }: FirestoreProviderProps) 
     async function updateData(data: Omit<T, 'id'>, id?: string) {
         if (!id || !userId) return;
 
-        const docRef = doc(db, `artifacts/${appId}/users/${userId}/pantry`, id);
+        const docRef = doc(db, `artifacts/${appId}/users/${userId}/${objectType}`, id);
         await updateDoc(docRef, {
             ...data,
         });
+    }
+
+    async function deleteData(id?: string) {
+        if (!id || !userId) return;
+
+        const docRef = doc(db, `artifacts/${appId}/users/${userId}/${objectType}`, id);
+        await deleteDoc(docRef);
     }
 
     const contextValue: FirestoreContextValue<T> = { 
@@ -108,7 +117,8 @@ function FirestoreProvider<T>({ children, objectType }: FirestoreProviderProps) 
         isAuthReady, 
         data, 
         createData, 
-        updateData 
+        updateData,
+        deleteData
     };
 
     return (

@@ -1,4 +1,4 @@
-import type { FormField, FormFieldExtended } from "@/utils/schema";
+import type { FormField, FormFieldExtended, UnitExtended } from "@/utils/schema";
 import FieldSelect from "./FieldSelect";
 import FieldInput from "./FieldInput";
 
@@ -7,7 +7,12 @@ type FieldQuantityProps<T> = {
     extraField?: FormField;
     formData: T;
     handleInputChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
-    handleSelectChange: (fieldName: string, value: string) => void;
+    handleUnitChange: (
+        quantity: number, 
+        oldUnit: UnitExtended, 
+        newUnit: UnitExtended,
+        field: FormFieldExtended
+    ) => void;
     className?: string;
     disabled?: boolean;
 }
@@ -17,7 +22,7 @@ export default function FieldQuantity<T>({
     extraField,
     formData, 
     handleInputChange,
-    handleSelectChange,
+    handleUnitChange,
     className="",
     disabled = false
 }: FieldQuantityProps<T>) {
@@ -33,7 +38,12 @@ export default function FieldQuantity<T>({
             <FieldSelect<T>
                 field={extraField as FormField}
                 formData={formData}
-                handleSelectChange={handleSelectChange}
+                handleSelectChange={(fieldName, value) => handleUnitChange(
+                    formData[field.name as keyof T] as number, 
+                    formData[fieldName as keyof T] as UnitExtended, 
+                    value as UnitExtended,
+                    field
+                )}
                 className={className}
             />
         </div>

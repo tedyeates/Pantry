@@ -1,30 +1,56 @@
 import type { Unit } from "convert-units";
 
+export type Recipe = {
+    id: string;
+    name: string;
+    ingredients: Ingredient[];
+    instructions: string;
+}
+
  // define a type for the schema
-export type UnitExtended = Unit | 'unit' | 'pinch' | 'tbsp';
+export type UnitExtended = Unit | 'unit' | 'tbsp';
 
 export type Ingredient = {
     id: string;
     name: string;
     quantity: number;
-    unit: Unit
+    unit: UnitExtended
     type: string; // e.g. meat, veg, carb
     location: string; // where the item is stored
 }
 
-export type SupportedFields = string | number | boolean | Date | number;
+export type PantryItem = Omit<Ingredient, 'id'> & { 
+    reduce_quantity?: number, reduce_unit?: UnitExtended 
+};
+
+export type SupportedFields = string | number | boolean | Date | number | Ingredient[];
 
 export type FormField = {
     name: string;
     label: string;
-    type: 'text' | 'number' |'select' | 'quantity' | 'reduceQuantity';
+    type: 'text' | 'number' |'select' | 'quantity' | 'reduceQuantity' | 'textarea';
     placeholder?: string;
     required?: boolean;
     options?: { value: string; label: string }[];
+    relatedCollection?: string;
     min?: number;
     step?: number;
 }
 
-export type FormFieldExtended = FormField & { extraFields?: FormField[] };
+export type FormFieldExtended = FormField & { extraFields?: FormFieldExtended[] };
+
+
+export type DialogData<T> = {
+    title: string;
+    description?: string;
+    initialData?: Partial<T>;
+    dialogType: 'create' | 'update';
+    fields: FormFieldExtended[];
+}
 
 export type ObjectType  = 'pantry' | 'recipe';
+
+export type QuantityReturnType = {
+    val: number;
+    unit: UnitExtended;
+}

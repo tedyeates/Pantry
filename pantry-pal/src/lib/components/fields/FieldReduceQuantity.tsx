@@ -1,20 +1,25 @@
-import type { FormField, FormFieldExtended } from "@/utils/schema";
+import type { FormFieldExtended, UnitExtended } from "@/utils/schema";
 import FieldQuantity from "./FieldQuantity";
 
 type FieldReduceQuantityProps<T> = {
     field: FormFieldExtended;
     formData: T;
     handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-    handleSelectChange: (fieldName: string, value: string) => void;
+    handleUnitChange: (
+        quantity: number, 
+        oldUnit: UnitExtended, 
+        newUnit: UnitExtended,
+        field: FormFieldExtended
+    ) => void;
     className?: string;
     disabled?: boolean;
-    extraFields: FormField[]
+    extraFields: FormFieldExtended[]
 }
 export default function FieldReduceQuantity<T>({
     field, 
     formData, 
     handleInputChange,
-    handleSelectChange,
+    handleUnitChange,
     className="",
     disabled=false,
     extraFields
@@ -25,9 +30,10 @@ export default function FieldReduceQuantity<T>({
             <FieldQuantity<T>
                 field={field}
                 formData={formData}
-                handleSelectChange={handleSelectChange}
+                handleInputChange={handleInputChange}
+                handleUnitChange={handleUnitChange}
                 className={className}
-                disabled={true}
+                disabled={disabled}
                 extraField={extraFields[0]}
             />
 
@@ -35,13 +41,13 @@ export default function FieldReduceQuantity<T>({
 
             {/* Reduced Quantity Field */}
             <FieldQuantity<T>
-                field={field}
+                field={extraFields[1]}
                 formData={formData}
                 handleInputChange={handleInputChange}
-                handleSelectChange={handleSelectChange}
+                handleUnitChange={handleUnitChange}
                 className={className}
                 disabled={disabled}
-                extraField={extraFields[1]}
+                extraField={extraFields[1].extraFields?.[0]}
             />
         </div>
     )
