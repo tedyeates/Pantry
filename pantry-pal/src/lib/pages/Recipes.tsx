@@ -1,9 +1,11 @@
-import type { DialogData, FormFieldExtended, Recipe } from "@/utils/schema";
+import type { DialogData, FormFieldExtended, Recipe } from "@/lib/schemas/schema";
 import { useState } from "react";
 import { useFirestore } from "../context/Firebase";
 import { DataTable, type ColumnDefinition } from "../components/Table";
 import { Button } from "@/components/ui/button";
 import DataDialog from "../components/Dialog";
+import { getUnits } from "@/utils/options";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 function Recipes() {
     const [dialog, setDialog] = useState<DialogData<Recipe>>({
@@ -21,19 +23,107 @@ function Recipes() {
 
     const recipeColumns: ColumnDefinition<Recipe>[] = [
         { header: "Name", accessorKey: "name" },
-        { header: "Ingredients", accessorKey: "ingredients" },
-        { header: "Instructions", accessorKey: "instructions" },
+        {
+            header: "Ingredients",
+            accessorKey: "ingredients", 
+            accessorFn: (item) => {
+                const ingredientNames = item.ingredients
+                    ?.map((ingredient) => ingredient.name)
+                    .join(', ');
+
+                const displaySummary = ingredientNames?.length > 40
+                    ? `${ingredientNames.substring(0, 37)}...`
+                    : ingredientNames || 'N/A';
+
+                return (
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <span>
+                                {displaySummary}
+                                {item.ingredients && item.ingredients.length > 0 && (
+                                    <TooltipContent className="p-2 text-left shadow-lg">
+                                        <h4 className="font-semibold mb-1 text-sm">Full Ingredients:</h4>
+                                        <ul className="list-disc list-inside space-y-0.5 text-xs">
+                                            {item.ingredients.map((ingredient, index) => (
+                                            <li key={index}>
+                                                <span className="font-medium">{ingredient.name}</span>
+                                                <span className="ml-0.5">({ingredient.quantity} {ingredient.unit})</span>
+                                            </li>
+                                            ))}
+                                        </ul>
+                                    </TooltipContent>
+                                )}
+                                </span>
+                            </TooltipTrigger>
+                        </Tooltip>
+                    </TooltipProvider>
+                );
+            }
+        },
+        { 
+            header: "Instructions", 
+            accessorKey: "instructions",
+            accessorFn: (item) => {
+                const displaySummary = item.instructions?.length > 40
+                    ? `${item.instructions.substring(0, 37)}...`
+                    : item.instructions || 'N/A';
+
+                return (
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <span>
+                                {displaySummary}
+                                {item.instructions && item.instructions.length > 0 && (
+                                    <TooltipContent className="p-2 text-left shadow-lg">
+                                        <h4 className="font-semibold mb-1 text-sm">Full Instructions</h4>
+                                        <ul className="list-disc list-inside space-y-0.5 text-xs">
+                                            <span className="font-medium">{item.instructions}</span>
+                                        </ul>
+                                    </TooltipContent>
+                                )}
+                                </span>
+                            </TooltipTrigger>
+                        </Tooltip>
+                    </TooltipProvider>
+                );
+            }
+        },
         // Add more columns as needed
     ];
 
+    const ingredientSubFields: FormFieldExtended[] = [
+        {
+            name: 'name',
+            label: 'Name',
+            type: 'text',
+            placeholder: 'e.g., Flour',
+            required: true
+        },
+        {
+            name: 'quantity',
+            label: 'Quantity',
+            type: 'quantity',
+            required: true,
+            min: 0,
+            step: 0.01,
+            placeholder: 'e.g., 500',
+            extraFields: [{
+                name: 'unit', label: 'Unit', type: 'select', 
+                options: getUnits(true)
+            }]
+        }
+    ]
+
     const defaultRecipeFormFields: FormFieldExtended[] = [
         { 
-            name: 'name', label: 'Recipe Name', type: 'text', 
+            name: 'name', label: 'Name', type: 'text', 
             required: true, placeholder: 'e.g., Katsu Curry' 
         },
         {
-            name: 'ingredients', label: 'Ingredients', type: 'select', 
-            required: false, options: [], relatedCollection: 'pantry'
+            name: 'ingredients', label: 'Ingredients', type: 'arrayOfObjects', 
+            required: true, relatedCollection: 'pantry', extraFields: ingredientSubFields
         },
         {
             name: 'instructions', label: 'Instructions', type: 'textarea', 

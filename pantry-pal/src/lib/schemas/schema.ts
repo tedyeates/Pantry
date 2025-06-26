@@ -23,12 +23,15 @@ export type PantryItem = Omit<Ingredient, 'id'> & {
     reduce_quantity?: number, reduce_unit?: UnitExtended 
 };
 
+export type SupportedObjects = Recipe | Ingredient;
+
+
 export type SupportedFields = string | number | boolean | Date | number | Ingredient[];
 
 export type FormField = {
     name: string;
     label: string;
-    type: 'text' | 'number' |'select' | 'quantity' | 'reduceQuantity' | 'textarea';
+    type: 'text' | 'number' |'select' | 'quantity' | 'reduceQuantity' | 'textarea' | 'arrayOfObjects';
     placeholder?: string;
     required?: boolean;
     options?: { value: string; label: string }[];

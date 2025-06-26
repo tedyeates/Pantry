@@ -1,5 +1,5 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { FormField } from "@/utils/schema";
+import type { FormField } from "@/lib/schemas/schema";
 
 type FieldSelectProps<T> = {
     field: FormField;

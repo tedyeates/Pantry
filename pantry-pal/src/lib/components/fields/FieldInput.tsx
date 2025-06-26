@@ -1,5 +1,5 @@
 import { Input } from "@/components/ui/input"
-import type { FormField } from "@/utils/schema"
+import type { FormField } from "@/lib/schemas/schema"
 
 type FieldInputProps<T> = {
     field: FormField;

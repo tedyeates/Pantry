@@ -1,6 +1,6 @@
 
 import convert, { type Unit } from 'convert-units';
-import type { QuantityReturnType, UnitExtended } from './schema';
+import type { QuantityReturnType, UnitExtended } from '../lib/schemas/schema';
 
 
 function calculateQuantity(currentQuantity: number, reduceQuantity: number): number {

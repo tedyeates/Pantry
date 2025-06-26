@@ -1,16 +1,12 @@
-import type { FormFieldExtended, UnitExtended } from "@/utils/schema";
+import type { FormFieldExtended } from "@/lib/schemas/schema";
 import FieldQuantity from "./FieldQuantity";
 
 type FieldReduceQuantityProps<T> = {
     field: FormFieldExtended;
     formData: T;
     handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-    handleUnitChange: (
-        quantity: number, 
-        oldUnit: UnitExtended, 
-        newUnit: UnitExtended,
-        field: FormFieldExtended
-    ) => void;
+    handleSelectChange: (fieldName: string, value: string) => void;
+
     className?: string;
     disabled?: boolean;
     extraFields: FormFieldExtended[]
@@ -19,7 +15,7 @@ export default function FieldReduceQuantity<T>({
     field, 
     formData, 
     handleInputChange,
-    handleUnitChange,
+    handleSelectChange,
     className="",
     disabled=false,
     extraFields
@@ -31,7 +27,7 @@ export default function FieldReduceQuantity<T>({
                 field={field}
                 formData={formData}
                 handleInputChange={handleInputChange}
-                handleUnitChange={handleUnitChange}
+                handleSelectChange={handleSelectChange}
                 className={className}
                 disabled={disabled}
                 extraField={extraFields[0]}
@@ -44,7 +40,7 @@ export default function FieldReduceQuantity<T>({
                 field={extraFields[1]}
                 formData={formData}
                 handleInputChange={handleInputChange}
-                handleUnitChange={handleUnitChange}
+                handleSelectChange={handleSelectChange}
                 className={className}
                 disabled={disabled}
                 extraField={extraFields[1].extraFields?.[0]}

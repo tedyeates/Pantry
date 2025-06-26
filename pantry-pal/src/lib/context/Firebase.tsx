@@ -2,7 +2,7 @@ import { onAuthStateChanged, signInAnonymously, signInWithCustomToken } from "fi
 import { addDoc, collection, deleteDoc, doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { createContext, useContext, useEffect, useState } from "react";
 import { auth, db } from "../../utils/firebase";
-import type { ObjectType } from "@/utils/schema";
+import type { ObjectType } from "@/lib/schemas/schema";
 
 type FirestoreContextValue<T> = { 
     userId: string | null,

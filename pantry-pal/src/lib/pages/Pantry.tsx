@@ -1,10 +1,11 @@
 import { DataTable, type ColumnDefinition } from '@/lib/components/Table';
-import type { DialogData, FormFieldExtended, Ingredient, PantryItem, UnitExtended } from '@/utils/schema';
+import type { DialogData, FormFieldExtended, Ingredient, PantryItem, UnitExtended } from '@/lib/schemas/schema';
 import { useState } from 'react';
 import DataDialog from '../components/Dialog';
 import { Button } from '@/components/ui/button';
 import { useFirestore } from '../context/Firebase';
 import { reduceQuantity } from '@/utils/quantity';
+import { getIngredientTypes, getLocations, getUnits } from '@/utils/options';
 
 
 
@@ -31,26 +32,12 @@ function Pantry() {
     ];
 
     const defaultPantryFormFields: FormFieldExtended[] = [
-        { name: 'name', label: 'Food Name', type: 'text', required: true, placeholder: 'e.g., Chicken Breast' },
+        { name: 'name', label: 'Ingredient Name', type: 'text', required: true, placeholder: 'e.g., Flour' },
         {
-            name: 'type', label: 'Type', type: 'select', required: true, options: [
-                { value: 'Vegetable', label: 'Vegetable' },
-                { value: 'Meat', label: 'Meat' },
-                { value: 'Carbohydrate', label: 'Carbohydrate' },
-                { value: 'Dairy', label: 'Dairy' },
-                { value: 'Fruit', label: 'Fruit' },
-                { value: 'Spice', label: 'Spice' },
-                { value: 'Condiment', label: 'Condiment' },
-                { value: 'Other', label: 'Other' },
-            ]
+            name: 'type', label: 'Type', type: 'select', required: true, options: getIngredientTypes()
         },
         {
-            name: 'location', label: 'Location', type: 'select', required: true, options: [
-                { value: 'Pantry', label: 'Pantry' },
-                { value: 'Fridge', label: 'Fridge' },
-                { value: 'Freezer', label: 'Freezer' },
-                { value: 'Cupboard', label: 'Cupboard' },
-            ]
+            name: 'location', label: 'Location', type: 'select', required: true, options: getLocations()
         },
     ];
 
@@ -59,13 +46,7 @@ function Pantry() {
         min: 0, step: 0.01, required: true, 
         placeholder: 'e.g., 500', extraFields: [{
             name: 'unit', label: 'Unit', type: 'select', 
-            options: [
-                { value: 'g', label: 'g' },
-                { value: 'kg', label: 'kg' },
-                { value: 'ml', label: 'ml' },
-                { value: 'l', label: 'L' },
-                { value: 'unit', label: 'unit(s)' },
-            ]
+            options: getUnits(true)
         }]
     }
 
@@ -74,31 +55,14 @@ function Pantry() {
         type: 'reduceQuantity',
         extraFields: [{
             name: 'unit', label: 'Unit', type: 'select', 
-            options: [
-                { value: 'g', label: 'g' },
-                { value: 'kg', label: 'kg' },
-                { value: 'ml', label: 'ml' },
-                { value: 'l', label: 'L' },
-                { value: 'unit', label: 'unit(s)' },
-            ]  
+            options: getUnits(true)
         },
         {
             name: 'reduce_quantity', label: 'Quantity', type: 'quantity', 
             min: 0, step: 0.01, required: false, 
             placeholder: 'e.g., 500', extraFields:[{
                 name: 'reduce_unit', label: 'Unit', type: 'select',
-                options: [
-                    { value: 'g', label: 'g' },
-                    { value: 'kg', label: 'kg' },
-                    { value: 'ml', label: 'ml' },
-                    { value: 'l', label: 'L' },
-                    { value: 'unit', label: 'unit(s)' },
-                    { value: 'Tbs', label: 'tbsp' },
-                    { value: 'tsp', label: 'tsp' },
-                    { value: 'cup' , label: 'cup' },
-                    { value: 'oz', label: 'oz' },
-                    { value: 'lb', label: 'lb' },
-                ]
+                options: getUnits()
             }]
         }]
     }

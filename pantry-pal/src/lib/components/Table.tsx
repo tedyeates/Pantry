@@ -55,7 +55,7 @@ export function DataTable<T extends { id: string | number }>({
                 data.map((item) => (
                     <TableRow onClick={() => openEditDialog(item)} key={item.id}> {/* Assuming each data item has a unique 'id' */}
                         {columns.map((column, colIndex) => (
-                        <TableCell key={column.accessorKey?.toString() || colIndex}>
+                        <TableCell key={column.accessorKey?.toString() || colIndex} className="cursor-pointer hover:bg-gray-50">
                             {column.accessorFn ? column.accessorFn(item) : item[column.accessorKey!] as string}
                         </TableCell>
                         ))}

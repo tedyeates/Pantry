@@ -1,13 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import type { FormField, FormFieldExtended, SupportedFields, UnitExtended } from "@/utils/schema";
+import type { FormField, FormFieldExtended, SupportedFields, UnitExtended } from "@/lib/schemas/schema";
 import { useCallback, useEffect, useState } from "react";
-import FieldSelect from "./fields/FieldSelect";
-import FieldInput from "./fields/FieldInput";
-import FieldQuantity from "./fields/FieldQuantity";
-import FieldReduceQuantity from "./fields/FieldReduceQuantity";
 import { convertUnit } from "@/utils/quantity";
+import Field from "./fields/Field";
 
 type DataDialogueProps<T> = {
     isOpen: boolean;
@@ -20,7 +17,7 @@ type DataDialogueProps<T> = {
     handleSave: (data: Omit<T, 'id'>) => Promise<void>;
 }
 
-function DataDialog<T extends Record<string, SupportedFields>>({
+function DataDialog<T>({
     isOpen,
     showModal,
     title,
@@ -44,7 +41,7 @@ function DataDialog<T extends Record<string, SupportedFields>>({
 
     const getNewFieldData = useCallback((fields: FormFieldExtended[], newFormData: T) => {
         fields.forEach(field => {
-            const initialValue = initialData && initialData[field.name]
+            const initialValue = initialData && initialData[field.name as keyof T]
             if (initialData && initialValue !== undefined) {
                 newFormData[field.name as keyof T] = initialValue;
             } else {
@@ -107,50 +104,6 @@ function DataDialog<T extends Record<string, SupportedFields>>({
         handleSave(formData);
     }
 
-    function renderField(field: FormFieldExtended) {
-        const fieldOptions = {
-            "select": (
-                <FieldSelect
-                    field={field}
-                    formData={formData}
-                    handleSelectChange={handleSelectChange}
-                    className="w-full"
-                />
-            ),
-            "quantity": (
-                <FieldQuantity
-                    field={field}
-                    formData={formData}
-                    handleInputChange={handleInputChange}
-                    handleUnitChange={handleUnitChange}
-                    extraField={field.extraFields?.[0]}
-                />
-            ),
-            "reduceQuantity": (
-                <FieldReduceQuantity
-                    field={field}
-                    formData={formData}
-                    handleInputChange={handleInputChange}
-                    handleUnitChange={handleUnitChange}
-                    extraFields={field.extraFields || []}
-                />
-            ),
-            "default": (
-                <FieldInput
-                    field={field}
-                    formData={formData}
-                    handleInputChange={handleInputChange}
-                />
-            )
-        }
-
-        if (field.type in fieldOptions) {
-            return fieldOptions[field.type as keyof typeof fieldOptions];
-        }
-
-        return fieldOptions["default"];
-    }
-
     return (
         <Dialog open={isOpen} onOpenChange={() => showModal(false)}>
             <DialogContent className="sm:max-w-[425px] p-6 rounded-lg shadow-xl">
@@ -162,7 +115,24 @@ function DataDialog<T extends Record<string, SupportedFields>>({
                 {fields.map((field) => (
                     <div key={field.name} className="space-y-2">
                     <Label htmlFor={field.name}>{field.label}</Label>
-                    {renderField(field)}
+                    <Field<T>
+                        field={field}
+                        formData={formData}
+                        handleInputChange={handleInputChange}
+                        handleUnitChange={(fieldName, value) => handleUnitChange(
+                            formData[field.name as keyof T] as number, 
+                            formData[fieldName as keyof T] as UnitExtended, 
+                            value as UnitExtended,
+                            field
+                        )}
+                        handleSelectChange={handleSelectChange}
+                        handleArrayOfObjectsChange={(newValues) => {
+                            setFormData((prevData) => ({
+                                ...prevData,
+                                [field.name]: newValues,
+                            }));
+                        }}
+                    />
                     </div>
                 ))}
                 <Button type="submit" className="w-full mt-4">

@@ -3,7 +3,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import Pantry from './lib/pages/Pantry';
 import Recipes from './lib/pages/Recipes';
 import { FirestoreProvider } from './lib/context/Firebase';
-import type { Ingredient, Recipe } from './utils/schema';
+import type { Ingredient, Recipe } from './lib/schemas/schema';
 
 // TODO: Add non anonymous auth
 function App() {

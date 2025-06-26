@@ -1,0 +1,76 @@
+
+import type { OpenFoodFactsResponse } from '@/lib/schemas/open-food-facts-schema';
+import type { Ingredient, UnitExtended } from '@/lib/schemas/schema';
+
+const OPEN_FOOD_FACTS_API_BASE_URL = import.meta.env.VITE_OPEN_FOOD_FACTS_API_BASE_URL;
+const USER_AGENT = import.meta.env.VITE_USER_AGENT; // Replace with your app's info
+
+export async function getOpenFoodFactsProduct(barcodeNumber: string): Promise<{
+    success: boolean, 
+    data?: Omit<Ingredient, 'id'> 
+}> {
+    const url = `${OPEN_FOOD_FACTS_API_BASE_URL}${barcodeNumber}`;
+    const headers = { 'User-Agent': USER_AGENT };
+
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+        const response = await fetch(url, { headers, signal: controller.signal }); // 10 second timeout
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+            // fetch() only throws an error for network issues, not for HTTP error codes (like 404, 500)
+            // So, we manually check response.ok and throw an error if it's not successful (2xx status)
+            return { 
+                success: false
+            }
+        }
+
+        const data: OpenFoodFactsResponse = await response.json();
+
+        if (data.status !== 1 || !data.product) 
+            return { 
+                success: false
+            }
+        
+        const product = data.product;
+
+
+        return {
+            success: true, 
+            data: {
+                name: product.product_name,
+                quantity: Number(product.product_quantity),
+                unit: product.product_quantity_unit as UnitExtended,
+                type:
+            }
+        }
+    } else {
+      return { 
+        barcode: barcodeNumber, 
+        name: 'N/A', 
+        brand: 'N/A', 
+        categories: 'N/A', 
+        quantityFromApi: 'N/A', 
+        unitFromApi: 'N/A', 
+        source: 'Open Food Facts', 
+        error: 'Product not found in Open Food Facts.' 
+      };
+    }
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      return { barcode: barcodeNumber, name: 'N/A', brand: 'N/A', categories: 'N/A', quantityFromApi: 'N/A', unitFromApi: 'N/A', source: 'Open Food Facts', error: 'Fetch request timed out.' };
+    }
+    // Handle other network errors or unexpected issues
+    return { 
+      barcode: barcodeNumber, 
+      name: 'N/A', 
+      brand: 'N/A', 
+      categories: 'N/A', 
+      quantityFromApi: 'N/A', 
+      unitFromApi: 'N/A', 
+      source: 'Open Food Facts', 
+      error: `Network or unexpected error: ${(error as Error).message}` 
+    };
+  }
+}
