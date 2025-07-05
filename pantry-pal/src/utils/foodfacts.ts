@@ -42,35 +42,13 @@ export async function getOpenFoodFactsProduct(barcodeNumber: string): Promise<{
                 name: product.product_name,
                 quantity: Number(product.product_quantity),
                 unit: product.product_quantity_unit as UnitExtended,
-                type:
+                type: "Other",
+                location: "Pantry",
             }
         }
-    } else {
-      return { 
-        barcode: barcodeNumber, 
-        name: 'N/A', 
-        brand: 'N/A', 
-        categories: 'N/A', 
-        quantityFromApi: 'N/A', 
-        unitFromApi: 'N/A', 
-        source: 'Open Food Facts', 
-        error: 'Product not found in Open Food Facts.' 
-      };
+    } catch (error) {
+        return {
+            success: false
+        }
     }
-  } catch (error) {
-    if (error instanceof DOMException && error.name === 'AbortError') {
-      return { barcode: barcodeNumber, name: 'N/A', brand: 'N/A', categories: 'N/A', quantityFromApi: 'N/A', unitFromApi: 'N/A', source: 'Open Food Facts', error: 'Fetch request timed out.' };
-    }
-    // Handle other network errors or unexpected issues
-    return { 
-      barcode: barcodeNumber, 
-      name: 'N/A', 
-      brand: 'N/A', 
-      categories: 'N/A', 
-      quantityFromApi: 'N/A', 
-      unitFromApi: 'N/A', 
-      source: 'Open Food Facts', 
-      error: `Network or unexpected error: ${(error as Error).message}` 
-    };
-  }
 }
