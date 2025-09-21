@@ -18,8 +18,16 @@ export type Ingredient = {
     unit: UnitExtended;
     type: string; // e.g. meat, veg, carb
     location: string; // where the item is stored
-    createdDate: Timestamp;
 }
+
+export type FirebaseIngredient = Ingredient & { 
+    createdDate: Timestamp;
+};
+
+export type PantryIngredient = Omit<Ingredient, 'id'> & { 
+    createdDate: Date;
+};
+
 
 export type PantryItem = Omit<Ingredient, 'id'> & { 
     reduce_quantity?: number, reduce_unit?: UnitExtended;

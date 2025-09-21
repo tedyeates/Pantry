@@ -4,8 +4,6 @@ import Pantry from './lib/pages/Pantry';
 import Recipes from './lib/pages/Recipes';
 import { FirestoreProvider } from './lib/context/Firebase';
 import type { Ingredient, Recipe } from './lib/schemas/schema';
-import { Button } from './components/ui/button';
-import { getOpenFoodFactsProduct } from './utils/foodfacts';
 import BarcodeScanner from './lib/pages/BarcodeScanner';
 
 // TODO: Add non anonymous auth
@@ -31,9 +29,9 @@ function App() {
                     </FirestoreProvider>
                     <TabsContent value="barcode">
                         <BarcodeScanner />
-                        <Button onClick={(event) => {
+                        {/* <Button onClick={(event) => {
                             console.log(getOpenFoodFactsProduct("5000328028873"))
-                        }}>Test Scan</Button>
+                        }}>Test Scan</Button> */}
                     </TabsContent>
                 </Tabs>
         </main>

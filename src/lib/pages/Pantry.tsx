@@ -1,11 +1,12 @@
 import { DataTable, type ColumnDefinition } from '@/lib/components/Table';
-import type { DialogData, FormFieldExtended, Ingredient, PantryItem, UnitExtended } from '@/lib/schemas/schema';
+import type { DialogData, FirebaseIngredient, FormFieldExtended, Ingredient, PantryIngredient, UnitExtended } from '@/lib/schemas/schema';
 import { useState } from 'react';
 import DataDialog from '../components/Dialog';
 import { Button } from '@/components/ui/button';
 import { useFirestore } from '../context/Firebase';
 import { reduceQuantity } from '@/utils/quantity';
 import { getIngredientTypes, getLocations, getUnits } from '@/utils/options';
+import { Timestamp } from 'firebase/firestore';
 
 
 function Pantry() {
@@ -20,9 +21,9 @@ function Pantry() {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     // const [removeQuantity, setRemoveQuantity] = useState(1);
 
-    const { data, createData, updateData, deleteData } = useFirestore<Ingredient>();
+    const { data, createData, updateData, deleteData } = useFirestore<FirebaseIngredient>();
 
-    const pantryColumns: ColumnDefinition<Ingredient>[] = [
+    const pantryColumns: ColumnDefinition<FirebaseIngredient>[] = [
         { header: "Name", accessorKey: "name" },
         { header: "Quantity", accessorFn: (row) => `${row.quantity} ${row.unit}` },
         { header: "Type", accessorKey: "type" },
@@ -95,7 +96,7 @@ function Pantry() {
         setIsDialogOpen(true);
     }
 
-    const handleReduceQuantity = (data: PantryItem): PantryItem => {
+    const handleReduceQuantity = (data: PantryIngredient): PantryIngredient => {
         if (!("reduce_quantity" in data && "reduce_unit" in data)) return data;
         
         const { val, unit} = reduceQuantity(
@@ -115,19 +116,20 @@ function Pantry() {
         }
     }
 
-    const handleSaveIngredient = async (data: Omit<PantryItem, 'id'>) => {
+    const handleSaveIngredient = async (data: PantryIngredient) => {
         data = handleReduceQuantity(data);
+        const firebaseData = {...data, createdDate: Timestamp.fromDate(new Date())}
 
         try {
             if (dialog.dialogType === 'create') {
-                await createData(data);
+                await createData(firebaseData);
             }
 
             if (dialog.dialogType === 'update' && data.quantity <= 0) {
                 await deleteData(dialog.initialData?.id as string | undefined);
             }
             else if (dialog.dialogType === 'update') {
-                await updateData(data, dialog.initialData?.id as string | undefined);
+                await updateData(firebaseData, dialog.initialData?.id as string | undefined);
             }
 
             setIsDialogOpen(false);
@@ -145,7 +147,7 @@ function Pantry() {
                 </Button>
             </div>
 
-            <DataDialog<PantryItem>
+            <DataDialog<PantryIngredient>
                 isOpen={isDialogOpen}
                 showModal={setIsDialogOpen}
                 handleSave={handleSaveIngredient}
@@ -155,7 +157,7 @@ function Pantry() {
             {data.length === 0 ? (
                 <p className="text-center text-gray-600 text-lg mt-8">Your pantry is empty. Add some items!</p>
             ) : (
-                <DataTable<Ingredient>
+                <DataTable<FirebaseIngredient>
                     columns={pantryColumns}
                     data={data}
                     openEditDialog={openEditDialog}
