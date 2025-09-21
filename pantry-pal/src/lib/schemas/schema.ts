@@ -1,4 +1,5 @@
 import type { Unit } from "convert-units";
+import { Timestamp } from "firebase/firestore";
 
 export type Recipe = {
     id: string;
@@ -14,13 +15,14 @@ export type Ingredient = {
     id: string;
     name: string;
     quantity: number;
-    unit: UnitExtended
+    unit: UnitExtended;
     type: string; // e.g. meat, veg, carb
     location: string; // where the item is stored
+    createdDate: Timestamp;
 }
 
 export type PantryItem = Omit<Ingredient, 'id'> & { 
-    reduce_quantity?: number, reduce_unit?: UnitExtended 
+    reduce_quantity?: number, reduce_unit?: UnitExtended;
 };
 
 export type SupportedObjects = Recipe | Ingredient;

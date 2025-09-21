@@ -101,7 +101,7 @@ function DataDialog<T>({
 
     const onSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        handleSave(formData);
+        handleSave({...formData, createdDate: new Date()});
     }
 
     return (

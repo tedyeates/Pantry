@@ -41,6 +41,7 @@ export function DataTable<T extends { id: string | number }>({
         event.stopPropagation();
         await deleteData(id);
     }
+    
     return (
         <Table>
             <TableHeader>

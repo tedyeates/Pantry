@@ -8,7 +8,6 @@ import { reduceQuantity } from '@/utils/quantity';
 import { getIngredientTypes, getLocations, getUnits } from '@/utils/options';
 
 
-
 function Pantry() {
     const [dialog, setDialog] = useState<DialogData<Ingredient>>({
         title: '',
@@ -28,7 +27,7 @@ function Pantry() {
         { header: "Quantity", accessorFn: (row) => `${row.quantity} ${row.unit}` },
         { header: "Type", accessorKey: "type" },
         { header: "Location", accessorKey: "location" },
-        // Add more columns as needed
+        { header: "Created Date", accessorFn: (row) => row.createdDate?.toDate().toLocaleDateString()},
     ];
 
     const defaultPantryFormFields: FormFieldExtended[] = [
@@ -118,6 +117,7 @@ function Pantry() {
 
     const handleSaveIngredient = async (data: Omit<PantryItem, 'id'>) => {
         data = handleReduceQuantity(data);
+
         try {
             if (dialog.dialogType === 'create') {
                 await createData(data);
@@ -145,7 +145,7 @@ function Pantry() {
                 </Button>
             </div>
 
-            <DataDialog<Ingredient>
+            <DataDialog<PantryItem>
                 isOpen={isDialogOpen}
                 showModal={setIsDialogOpen}
                 handleSave={handleSaveIngredient}
@@ -155,7 +155,7 @@ function Pantry() {
             {data.length === 0 ? (
                 <p className="text-center text-gray-600 text-lg mt-8">Your pantry is empty. Add some items!</p>
             ) : (
-                <DataTable
+                <DataTable<Ingredient>
                     columns={pantryColumns}
                     data={data}
                     openEditDialog={openEditDialog}
