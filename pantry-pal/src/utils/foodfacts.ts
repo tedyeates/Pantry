@@ -1,6 +1,7 @@
 
 import type { OpenFoodFactsResponse } from '@/lib/schemas/open-food-facts-schema';
 import type { Ingredient, UnitExtended } from '@/lib/schemas/schema';
+import { Timestamp } from "firebase/firestore";
 
 const OPEN_FOOD_FACTS_API_BASE_URL = import.meta.env.VITE_OPEN_FOOD_FACTS_API_BASE_URL;
 const USER_AGENT = import.meta.env.VITE_USER_AGENT; // Replace with your app's info
@@ -44,9 +45,11 @@ export async function getOpenFoodFactsProduct(barcodeNumber: string): Promise<{
                 unit: product.product_quantity_unit as UnitExtended,
                 type: "Other",
                 location: "Pantry",
+                createdDate: Timestamp.fromDate(new Date())
             }
         }
-    } catch (error) {
+    } catch (error: unknown) {
+        console.log(error)
         return {
             success: false
         }

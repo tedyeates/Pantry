@@ -6,6 +6,7 @@ import { FirestoreProvider } from './lib/context/Firebase';
 import type { Ingredient, Recipe } from './lib/schemas/schema';
 import { Button } from './components/ui/button';
 import { getOpenFoodFactsProduct } from './utils/foodfacts';
+import BarcodeScanner from './lib/pages/BarcodeScanner';
 
 // TODO: Add non anonymous auth
 function App() {
@@ -16,13 +17,11 @@ function App() {
                     <TabsList className="grid w-full grid-cols-3 mb-6">
                         <TabsTrigger value="pantry">Pantry</TabsTrigger>
                         <TabsTrigger value="recipes">Recipe Book</TabsTrigger>
+                        <TabsTrigger value="barcode">Barcode Scanner</TabsTrigger>
                     </TabsList>
                     <FirestoreProvider<Ingredient> objectType="pantry">
                         <TabsContent value="pantry">
                             <Pantry />
-                            <Button onClick={(event) => {
-                                console.log(getOpenFoodFactsProduct("5000328028873"))
-                            }}>Test Scan</Button>
                         </TabsContent>
                     </FirestoreProvider>
                     <FirestoreProvider<Recipe> objectType="recipe">
@@ -30,6 +29,12 @@ function App() {
                             <Recipes />
                         </TabsContent>
                     </FirestoreProvider>
+                    <TabsContent value="barcode">
+                        <BarcodeScanner />
+                        <Button onClick={(event) => {
+                            console.log(getOpenFoodFactsProduct("5000328028873"))
+                        }}>Test Scan</Button>
+                    </TabsContent>
                 </Tabs>
         </main>
     )
