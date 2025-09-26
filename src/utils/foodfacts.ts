@@ -1,6 +1,7 @@
 
 import type { OpenFoodFactsResponse } from '@/lib/schemas/open-food-facts-schema';
 import type { PantryIngredient, UnitExtended } from '@/lib/schemas/schema';
+import convert from 'convert-units';
 
 const OPEN_FOOD_FACTS_API_BASE_URL = import.meta.env.VITE_OPEN_FOOD_FACTS_API_BASE_URL;
 const USER_AGENT = import.meta.env.VITE_USER_AGENT; // Replace with your app's info
@@ -35,22 +36,42 @@ export async function getOpenFoodFactsProduct(barcodeNumber: string): Promise<{
         
         const product = data.product;
 
+        const [quantity, unit] = product.quantity?.split(' ') ?? [undefined, undefined];
+        
+        const unitsSupported: UnitExtended[] = convert().possibilities();
+        unitsSupported.push('tbsp')
+        unitsSupported.push('unit')
+        
+        let finalUnit = unit
+        if (!unitsSupported.includes(unit as UnitExtended)) {
+            finalUnit = 'unit'
+        }
 
         return {
             success: true, 
             data: {
                 name: product.product_name,
-                quantity: Number(product.product_quantity),
-                unit: product.product_quantity_unit as UnitExtended,
+                quantity: Number(quantity),
+                unit: finalUnit as UnitExtended,
                 type: "Other",
                 location: "Pantry",
-                createdDate: new Date()
+                createdDate: new Date(),
+                shop: product.stores
             }
         }
     } catch (error: unknown) {
         console.log(error)
         return {
-            success: false
+            success: false,
+            data: {
+                name: "",
+                quantity: 0,
+                unit: "unit",
+                type: "Other",
+                location: "Pantry",
+                createdDate: new Date(),
+                shop: ""
+            }
         }
     }
 }

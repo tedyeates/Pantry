@@ -1,8 +1,9 @@
 export interface Product {
     product_name: string;
-    product_quantity: string; // e.g., "400"
-    product_quantity_unit: string; // e.g., "g"
-    food_groups: string
+    product: string;
+    food_groups: string;
+    stores: string;
+    quantity: string;
 }
 
 export interface OpenFoodFactsResponse {

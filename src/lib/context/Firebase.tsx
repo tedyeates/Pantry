@@ -1,5 +1,5 @@
 import { onAuthStateChanged, signInAnonymously, signInWithCustomToken } from "firebase/auth";
-import { addDoc, collection, deleteDoc, doc, onSnapshot, updateDoc } from 'firebase/firestore';
+import { addDoc, collection, deleteDoc, doc, onSnapshot, updateDoc, writeBatch } from 'firebase/firestore';
 import { createContext, useContext, useEffect, useState } from "react";
 import { auth, db } from "../../utils/firebase";
 import type { ObjectType } from "@/lib/schemas/schema";
@@ -8,7 +8,8 @@ type FirestoreContextValue<T> = {
     userId: string | null,
     isAuthReady: boolean,
     data: T[],
-    createData: (data: Omit<T, 'id'>) => void,
+    createData: (data: Omit<T, 'id'>) => Promise<void>,
+    createMultipleData: (data: Omit<T, 'id'>[]) => Promise<void>,
     updateData: (data: Omit<T, 'id'>, id?: string) => void
     deleteData: (id?: string) => void
 };
@@ -17,7 +18,8 @@ const FirestoreContext = createContext<FirestoreContextValue<unknown>>({
     userId: null,
     isAuthReady: false,
     data: [],
-    createData: () => {},
+    createData: async () => {},
+    createMultipleData: async () => {},
     updateData: () => {},
     deleteData: () => {},
 })
@@ -77,7 +79,6 @@ function FirestoreProvider<T>({ children, objectType }: FirestoreProviderProps) 
                 ...doc.data() as Omit<T, 'id'>,
             }) as T);
             setData(data);
-            console.log(data);
         }, (error) => {
             console.error("Error fetching items:", error);
         })
@@ -96,6 +97,21 @@ function FirestoreProvider<T>({ children, objectType }: FirestoreProviderProps) 
         });
     }
 
+    async function createMultipleData(data: Omit<T, 'id'>[]) {
+        if (!userId || data.length === 0) return;
+
+        const batch = writeBatch(db);
+        const collectionRef = collection(db, `artifacts/${appId}/users/${userId}/${objectType}`);
+
+        data.forEach((item) => {
+            const docRef = doc(collectionRef); // Automatically generate a new document ID
+            batch.set(docRef, {
+                ...item,
+                createdDate: new Date(),
+            });
+        });
+        await batch.commit();
+    }
     async function updateData(data: Omit<T, 'id'>, id?: string) {
         if (!id || !userId) return;
 
@@ -117,6 +133,7 @@ function FirestoreProvider<T>({ children, objectType }: FirestoreProviderProps) 
         isAuthReady, 
         data, 
         createData, 
+        createMultipleData,
         updateData,
         deleteData
     };
@@ -139,5 +156,3 @@ function useFirestore<T>(): FirestoreContextValue<T> {
 }
 
 export { FirestoreProvider, useFirestore }
-
-

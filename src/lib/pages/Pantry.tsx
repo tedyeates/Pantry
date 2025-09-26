@@ -1,12 +1,12 @@
 import { DataTable, type ColumnDefinition } from '@/lib/components/Table';
-import type { DialogData, FirebaseIngredient, FormFieldExtended, Ingredient, PantryIngredient, UnitExtended } from '@/lib/schemas/schema';
+import type { DialogData, FirebaseIngredient, Ingredient, PantryIngredient, UnitExtended } from '@/lib/schemas/schema';
 import { useState } from 'react';
 import DataDialog from '../components/Dialog';
 import { Button } from '@/components/ui/button';
 import { useFirestore } from '../context/Firebase';
 import { reduceQuantity } from '@/utils/quantity';
-import { getIngredientTypes, getLocations, getUnits } from '@/utils/options';
 import { Timestamp } from 'firebase/firestore';
+import { creatFields, updateFields } from '@/utils/fieldData';
 
 
 function Pantry() {
@@ -30,52 +30,6 @@ function Pantry() {
         { header: "Location", accessorKey: "location" },
         { header: "Created Date", accessorFn: (row) => row.createdDate?.toDate().toLocaleDateString()},
     ];
-
-    const defaultPantryFormFields: FormFieldExtended[] = [
-        { name: 'name', label: 'Ingredient Name', type: 'text', required: true, placeholder: 'e.g., Flour' },
-        {
-            name: 'type', label: 'Type', type: 'select', required: true, options: getIngredientTypes()
-        },
-        {
-            name: 'location', label: 'Location', type: 'select', required: true, options: getLocations()
-        },
-    ];
-
-    const createQuantityField: FormFieldExtended = { 
-        name: 'quantity', label: 'Quantity', type: 'quantity', 
-        min: 0, step: 0.01, required: true, 
-        placeholder: 'e.g., 500', extraFields: [{
-            name: 'unit', label: 'Unit', type: 'select', 
-            options: getUnits(true)
-        }]
-    }
-
-    const updateQuantityField: FormFieldExtended = {
-        ...createQuantityField,
-        type: 'reduceQuantity',
-        extraFields: [{
-            name: 'unit', label: 'Unit', type: 'select', 
-            options: getUnits(true)
-        },
-        {
-            name: 'reduce_quantity', label: 'Quantity', type: 'quantity', 
-            min: 0, step: 0.01, required: false, 
-            placeholder: 'e.g., 500', extraFields:[{
-                name: 'reduce_unit', label: 'Unit', type: 'select',
-                options: getUnits()
-            }]
-        }]
-    }
-
-    const creatFields: FormFieldExtended[] = [
-        ...defaultPantryFormFields,
-        createQuantityField
-    ]
-
-    const updateFields: FormFieldExtended[] = [
-        ...defaultPantryFormFields,
-        updateQuantityField
-    ]  
 
     const openCreateDialog = () => {
         setDialog({ 
