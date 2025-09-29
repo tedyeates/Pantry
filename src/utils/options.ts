@@ -20,6 +20,16 @@ export const getLocations = () => {
     ]
 }
 
+export const getShops = () => {
+    return [
+        { value: '-----', label: '-----' },
+        { value: 'Lidl', label: 'Lidl' },
+        { value: 'Aldi', label: 'Aldi' },
+        { value: 'Tesco', label: 'Tesco' },
+        { value: 'Asda', label: 'Asda' },
+    ]
+}
+
 export const getUnits = (isStorage: boolean = false) => {
     const storageUnits = [
         { value: 'g', label: 'g' },

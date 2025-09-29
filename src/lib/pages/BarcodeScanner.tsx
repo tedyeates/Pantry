@@ -5,23 +5,29 @@ import type { Result } from "@zxing/library";
 import { BrowserMultiFormatReader, NotFoundException } from "@zxing/library";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
-import type { FormFieldExtended, PantryIngredient, SupportedObjects, UnitExtended } from "@/lib/schemas/schema";
+import type { BarcodeIngredient, FormFieldExtended, PantryIngredient, SupportedObjects, UnitExtended } from "@/lib/schemas/schema";
 import { getOpenFoodFactsProduct } from "@/utils/foodfacts";
 import { useFirestore } from "../context/Firebase";
 import { Trash2, Save } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import Field from "../components/fields/Field";
 import { convertUnit } from "@/utils/quantity";
-import { creatFields } from "@/utils/fieldData";
+import { createFields } from "@/utils/fieldData";
 
+const PANTRY_OBJECT_TYPE = "pantry"
+const BARCODE_OBJECT_TYPE = "barcode"
 
 export default function BarcodeScanner() {
     const videoRef = useRef<HTMLVideoElement>(null);
     const [scanning, setScanning] = useState(false);
     const codeReaderRef = useRef<BrowserMultiFormatReader | null>(null);
-    const [scannedItems, setScannedItems] = useState<Omit<PantryIngredient, 'id'>[]>([]);
+    const [scannedItems, setScannedItems] = useState<Omit<BarcodeIngredient, 'id'>[]>([]);
     const [isLoading, setIsLoading] = useState(false);
-    const { createMultipleData } = useFirestore<PantryIngredient>();
+    const { createMultipleData, upsertData, getDataById } = useFirestore<PantryIngredient>();
+
+    const barcodeField: FormFieldExtended = {
+        name: 'barcode', label: 'Barcode', type: 'text', required: true, placeholder: "e.g. 2202345"
+    }
 
     // Effect to clean up the camera stream when the component unmounts
     useEffect(() => {
@@ -38,12 +44,19 @@ export default function BarcodeScanner() {
             const productResult = await getOpenFoodFactsProduct(barcode);
             console.log(barcode)
             console.log(productResult)
-            if (productResult.data) {
-                setScannedItems(prevItems => [...prevItems, productResult.data!]);
-            } 
-
+    
+            let ingredient = null
             if (!productResult.success) {
                 console.error("Product not found or error fetching data for barcode:", barcode);
+                ingredient = await getDataById(BARCODE_OBJECT_TYPE, barcode) as BarcodeIngredient;
+            }
+
+            if (ingredient) {
+                setScannedItems(prevItems => [...prevItems, ingredient]);
+            }
+
+            if (productResult.success || !ingredient) {
+                setScannedItems(prevItems => [...prevItems, productResult.data!]);
             }
             
             setIsLoading(false);
@@ -80,7 +93,7 @@ export default function BarcodeScanner() {
     };
 
     const getScannedItem = (
-        items: Omit<PantryIngredient, 'id'>[],
+        items: Omit<BarcodeIngredient, 'id'>[],
         index: number,
         fieldName: string,
         value: string | number | SupportedObjects[],
@@ -133,13 +146,24 @@ export default function BarcodeScanner() {
     const handleSaveAll = async () => {
         setIsLoading(true);
         try {
-            await createMultipleData(scannedItems);
+            await createMultipleData(scannedItems, PANTRY_OBJECT_TYPE);
             setScannedItems([]); 
         } catch (error) {
             console.error("Error saving items to Firebase:", error);
         }
         setIsLoading(false);
     };
+
+    const handleSaveBarcode = async (index: number) => {
+        // Save template to use for that barcode
+        setIsLoading(true);
+        try {
+            await upsertData(scannedItems[index], BARCODE_OBJECT_TYPE, scannedItems[index].barcode);
+        } catch (error) {
+            console.error("Error saving items to Firebase:", error);
+        }
+        setIsLoading(false);
+    }
 
     return (
         <div>
@@ -159,13 +183,41 @@ export default function BarcodeScanner() {
             <div className="space-y-4 mt-4">
                 {scannedItems.map((item, index) => (
                     <Card key={index}>
-                        <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <Button variant="ghost" size="icon" onClick={() => handleRemoveItem(index)}>
-                                <Trash2 className="h-5 w-5 text-red-500" />
-                            </Button>
+                        <CardHeader className="flex flex-row items-end justify-between pb-2">
+                            <div key={barcodeField.name} className="space-y-2">
+                                <Label htmlFor={barcodeField.name}>{barcodeField.label}</Label>
+                                <Field<PantryIngredient>
+                                    field={barcodeField}
+                                    formData={item}
+                                    handleInputChange={(event) => handleInputChange(
+                                        index, 
+                                        barcodeField,
+                                        event.target.value
+                                    )}
+                                    handleUnitChange={(fieldName, value) => handleUnitChange(
+                                        scannedItems[index][barcodeField.name as keyof PantryIngredient] as number, 
+                                        scannedItems[index][fieldName as keyof PantryIngredient] as UnitExtended, 
+                                        value as UnitExtended,
+                                        barcodeField,
+                                        index
+                                    )}
+                                    handleSelectChange={(fieldName, value) => handleSelectChange(index, fieldName, value)}
+                                    handleArrayOfObjectsChange={(newValues) => {
+                                        handleSelectChange(index, barcodeField.name, newValues)
+                                    }}
+                                />
+                            </div>
+                            <div className="flex flex-row items-end gap-1">
+                                <Button size="icon" onClick={() => handleSaveBarcode(index)} disabled={isLoading}>
+                                    <Save className="h-4 w-4" />
+                                </Button>
+                                <Button variant="destructive" size="icon" onClick={() => handleRemoveItem(index)}>
+                                    <Trash2 className="h-5 w-5" />
+                                </Button>
+                            </div>
                         </CardHeader>
                         <CardContent className="grid gap-2 sm:grid-cols-2">
-                            {creatFields.map((field) => (
+                            {createFields.map((field) => (
                                 <div key={field.name} className="space-y-2">
                                 <Label htmlFor={field.name}>{field.label}</Label>
                                 <Field<PantryIngredient>

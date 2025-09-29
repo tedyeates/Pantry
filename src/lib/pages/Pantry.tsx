@@ -1,14 +1,15 @@
 import { DataTable, type ColumnDefinition } from '@/lib/components/Table';
 import type { DialogData, FirebaseIngredient, Ingredient, PantryIngredient, UnitExtended } from '@/lib/schemas/schema';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import DataDialog from '../components/Dialog';
 import { Button } from '@/components/ui/button';
 import { useFirestore } from '../context/Firebase';
 import { reduceQuantity } from '@/utils/quantity';
 import { Timestamp } from 'firebase/firestore';
-import { creatFields, updateFields } from '@/utils/fieldData';
+import { createFields, updateFields } from '@/utils/fieldData';
 
 
+const PANTRY_OBJECT_TYPE = "pantry"
 function Pantry() {
     const [dialog, setDialog] = useState<DialogData<Ingredient>>({
         title: '',
@@ -21,7 +22,7 @@ function Pantry() {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     // const [removeQuantity, setRemoveQuantity] = useState(1);
 
-    const { data, createData, updateData, deleteData } = useFirestore<FirebaseIngredient>();
+    const { data, createData, updateData, deleteData, getData } = useFirestore<FirebaseIngredient>();
 
     const pantryColumns: ColumnDefinition<FirebaseIngredient>[] = [
         { header: "Name", accessorKey: "name" },
@@ -35,7 +36,7 @@ function Pantry() {
         setDialog({ 
             title: 'Add Item', 
             dialogType: 'create', 
-            fields: creatFields 
+            fields: createFields 
         });
         setIsDialogOpen(true);
     }
@@ -76,14 +77,21 @@ function Pantry() {
 
         try {
             if (dialog.dialogType === 'create') {
-                await createData(firebaseData);
+                await createData(firebaseData, PANTRY_OBJECT_TYPE);
             }
 
             if (dialog.dialogType === 'update' && data.quantity <= 0) {
-                await deleteData(dialog.initialData?.id as string | undefined);
+                await deleteData(
+                    PANTRY_OBJECT_TYPE,
+                    dialog.initialData?.id as string | undefined
+                );
             }
             else if (dialog.dialogType === 'update') {
-                await updateData(firebaseData, dialog.initialData?.id as string | undefined);
+                await updateData(
+                    firebaseData, 
+                    PANTRY_OBJECT_TYPE,
+                    dialog.initialData?.id as string | undefined
+                );
             }
 
             setIsDialogOpen(false);
@@ -91,6 +99,13 @@ function Pantry() {
             console.error("Error submitting data:", error);
         }
     }
+
+    useEffect(() => {
+        const unsubscribe = getData(PANTRY_OBJECT_TYPE);
+        if (!unsubscribe) return;
+
+        return () => unsubscribe();
+    })
 
     return (
         <>
@@ -115,6 +130,7 @@ function Pantry() {
                     columns={pantryColumns}
                     data={data}
                     openEditDialog={openEditDialog}
+                    objectType='pantry'
                 />
             )}
         </>

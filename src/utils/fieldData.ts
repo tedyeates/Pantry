@@ -1,5 +1,5 @@
 import type { FormFieldExtended } from "@/lib/schemas/schema";
-import { getIngredientTypes, getLocations, getUnits } from "./options";
+import { getIngredientTypes, getLocations, getShops, getUnits } from "./options";
 
 const defaultPantryFormFields: FormFieldExtended[] = [
     { name: 'name', label: 'Ingredient Name', type: 'text', required: true, placeholder: 'e.g., Flour' },
@@ -8,6 +8,9 @@ const defaultPantryFormFields: FormFieldExtended[] = [
     },
     {
         name: 'location', label: 'Location', type: 'select', required: true, options: getLocations()
+    },
+    {
+        name: 'shop', label: 'Shop', type: 'select', required: true, options: getShops()
     },
 ];
 
@@ -37,7 +40,7 @@ const updateQuantityField: FormFieldExtended = {
     }]
 }
 
-export const creatFields: FormFieldExtended[] = [
+export const createFields: FormFieldExtended[] = [
     ...defaultPantryFormFields,
     createQuantityField
 ]

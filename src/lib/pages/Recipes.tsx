@@ -7,6 +7,8 @@ import DataDialog from "../components/Dialog";
 import { getUnits } from "@/utils/options";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
+const RECIPE_OBJECT_TYPE = "recipe"
+
 function Recipes() {
     const [dialog, setDialog] = useState<DialogData<Recipe>>({
         title: '',
@@ -90,7 +92,6 @@ function Recipes() {
                 );
             }
         },
-        // Add more columns as needed
     ];
 
     const ingredientSubFields: FormFieldExtended[] = [
@@ -154,10 +155,14 @@ function Recipes() {
     const handleSaveIngredient = async (data: Omit<Recipe, 'id'>) => {
         try {
             if (dialog.dialogType === 'create') {
-                await createData(data);
+                await createData(data, RECIPE_OBJECT_TYPE);
             }
             else if (dialog.dialogType === 'update') {
-                await updateData(data, dialog.initialData?.id as string | undefined);
+                await updateData(
+                    data, 
+                    RECIPE_OBJECT_TYPE,
+                    dialog.initialData?.id as string | undefined
+                );
             }
 
             setIsDialogOpen(false);
@@ -189,6 +194,7 @@ function Recipes() {
                     columns={recipeColumns}
                     data={data}
                     openEditDialog={openEditDialog}
+                    objectType="recipe"
                 />
             )}
         </>

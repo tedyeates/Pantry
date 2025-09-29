@@ -1,17 +1,19 @@
-import { onAuthStateChanged, signInAnonymously, signInWithCustomToken } from "firebase/auth";
-import { addDoc, collection, deleteDoc, doc, onSnapshot, updateDoc, writeBatch } from 'firebase/firestore';
+import { onAuthStateChanged, signInAnonymously, signInWithCustomToken, type Unsubscribe } from "firebase/auth";
+import { addDoc, collection, deleteDoc, doc, getDoc, onSnapshot, setDoc, updateDoc, writeBatch } from 'firebase/firestore';
 import { createContext, useContext, useEffect, useState } from "react";
 import { auth, db } from "../../utils/firebase";
-import type { ObjectType } from "@/lib/schemas/schema";
 
 type FirestoreContextValue<T> = { 
     userId: string | null,
     isAuthReady: boolean,
     data: T[],
-    createData: (data: Omit<T, 'id'>) => Promise<void>,
-    createMultipleData: (data: Omit<T, 'id'>[]) => Promise<void>,
-    updateData: (data: Omit<T, 'id'>, id?: string) => void
-    deleteData: (id?: string) => void
+    createData: (data: Omit<T, 'id'>, objectType: string) => Promise<void>,
+    createMultipleData: (data: Omit<T, 'id'>[], objectType: string) => Promise<void>,
+    updateData: (data: Omit<T, 'id'>, objectType: string, id?: string,) => void,
+    upsertData: (data: Omit<T, 'id'>, objectType: string, id?: string,) => void,
+    deleteData: (objectType: string, id?: string) => void,
+    getData: (objectType: string) => Unsubscribe | void,
+    getDataById: (objectType: string, id: string) => Promise<T | null | undefined>
 };
 
 const FirestoreContext = createContext<FirestoreContextValue<unknown>>({
@@ -21,18 +23,20 @@ const FirestoreContext = createContext<FirestoreContextValue<unknown>>({
     createData: async () => {},
     createMultipleData: async () => {},
     updateData: () => {},
+    upsertData: () => {},
     deleteData: () => {},
+    getData: () => {},
+    getDataById: async () => null
 })
 
 const initialAuthToken = null
 const appId = import.meta.env.VITE_FIREBASE_APP_NAME;
 
 type FirestoreProviderProps = { 
-    children: React.ReactNode, 
-    objectType: ObjectType 
+    children: React.ReactNode,
 };
 
-function FirestoreProvider<T>({ children, objectType }: FirestoreProviderProps) {
+function FirestoreProvider<T>({ children }: FirestoreProviderProps) {
     const [userId, setUserId] = useState<string | null>(null);
     const [isAuthReady, setIsAuthReady] = useState<boolean>(false);
     const [data, setData] = useState<T[]>([] as T[]);
@@ -69,7 +73,7 @@ function FirestoreProvider<T>({ children, objectType }: FirestoreProviderProps) 
         return () => unsubscribe();
     }, [isAuthReady]); // Depend on isAuthReady to ensure it runs once after initial check
 
-    useEffect(() => {
+    function getData(objectType: string) {
         if (!userId) return;
         
         const collectionRef = collection(db, `artifacts/${appId}/users/${userId}/${objectType}`);
@@ -83,21 +87,39 @@ function FirestoreProvider<T>({ children, objectType }: FirestoreProviderProps) 
             console.error("Error fetching items:", error);
         })
 
-        return () => unsubscribe();
-    }, [userId, objectType])
+        return unsubscribe;
+    }
 
-
-    async function createData(data: Omit<T, 'id'>) {
+    async function getDataById(objectType: string, id: string) {
         if (!userId) return;
 
-        const collectionRef = collection(db, `artifacts/${appId}/users/${userId}/${objectType}`);
+        const docRef = doc(db, `artifacts/${appId}/users/${userId}/${objectType}`, id);
+        const docSnapshot = await getDoc(docRef);
+
+        if (docSnapshot.exists()) {
+            return docSnapshot.data() as T;
+        } else {
+            console.log("No such document!");
+            return null;
+        }
+
+    }
+
+    async function createData(data: Omit<T, 'id'>, objectType: string) {
+        if (!userId) return;
+
+        const collectionRef = collection(
+            db, 
+            `artifacts/${appId}/users/${userId}/${objectType}`
+        );
+
         await addDoc(collectionRef, {
             ...data,
             createdAt: new Date(),
         });
     }
 
-    async function createMultipleData(data: Omit<T, 'id'>[]) {
+    async function createMultipleData(data: Omit<T, 'id'>[], objectType: string) {
         if (!userId || data.length === 0) return;
 
         const batch = writeBatch(db);
@@ -112,7 +134,8 @@ function FirestoreProvider<T>({ children, objectType }: FirestoreProviderProps) 
         });
         await batch.commit();
     }
-    async function updateData(data: Omit<T, 'id'>, id?: string) {
+
+    async function updateData(data: Omit<T, 'id'>, objectType: string, id?: string) {
         if (!id || !userId) return;
 
         const docRef = doc(db, `artifacts/${appId}/users/${userId}/${objectType}`, id);
@@ -121,7 +144,16 @@ function FirestoreProvider<T>({ children, objectType }: FirestoreProviderProps) 
         });
     }
 
-    async function deleteData(id?: string) {
+    async function upsertData(data: Omit<T, 'id'>, objectType: string, id?: string) {
+        if (!id || !userId) return;
+
+        const docRef = doc(db, `artifacts/${appId}/users/${userId}/${objectType}`, id);
+        await setDoc(docRef, {
+            ...data
+        }, { merge: true });
+    }
+
+    async function deleteData(objectType: string, id?: string) {
         if (!id || !userId) return;
 
         const docRef = doc(db, `artifacts/${appId}/users/${userId}/${objectType}`, id);
@@ -135,7 +167,10 @@ function FirestoreProvider<T>({ children, objectType }: FirestoreProviderProps) 
         createData, 
         createMultipleData,
         updateData,
-        deleteData
+        upsertData,
+        deleteData,
+        getData,
+        getDataById
     };
 
     return (

@@ -3,7 +3,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import Pantry from './lib/pages/Pantry';
 import Recipes from './lib/pages/Recipes';
 import { FirestoreProvider } from './lib/context/Firebase';
-import type { Ingredient, Recipe } from './lib/schemas/schema';
+import type { BarcodeIngredient, Ingredient, Recipe } from './lib/schemas/schema';
 import BarcodeScanner from './lib/pages/BarcodeScanner';
 
 // TODO: Add non anonymous auth
@@ -18,17 +18,17 @@ function App() {
                         <TabsTrigger value="barcode">Barcode Scanner</TabsTrigger>
                     </TabsList>
                     <TabsContent value="pantry">
-                        <FirestoreProvider<Ingredient> objectType="pantry">
-                            < Pantry />
+                        <FirestoreProvider<Ingredient>>
+                            <Pantry />
                         </FirestoreProvider>
                     </TabsContent>
                     <TabsContent value="recipes">
-                        <FirestoreProvider<Recipe> objectType="recipe">
+                        <FirestoreProvider<Recipe>>
                             <Recipes />
                         </FirestoreProvider>
                     </TabsContent>
                     <TabsContent value="barcode">
-                        <FirestoreProvider<Ingredient> objectType="pantry">
+                        <FirestoreProvider<Ingredient | BarcodeIngredient>>
                             <BarcodeScanner />
                         </FirestoreProvider>
                     </TabsContent>

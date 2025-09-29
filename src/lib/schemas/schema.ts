@@ -29,6 +29,11 @@ export type PantryIngredient = Omit<Ingredient, 'id'> & {
     createdDate: Date;
 };
 
+export type BarcodeIngredient = PantryIngredient & { 
+    barcode: string;
+};
+
+
 export type PantryIngredientValues = Date | string | number | UnitExtended;
 
 

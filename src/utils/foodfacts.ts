@@ -1,6 +1,6 @@
 
 import type { OpenFoodFactsResponse } from '@/lib/schemas/open-food-facts-schema';
-import type { PantryIngredient, UnitExtended } from '@/lib/schemas/schema';
+import type { BarcodeIngredient, UnitExtended } from '@/lib/schemas/schema';
 import convert from 'convert-units';
 
 const OPEN_FOOD_FACTS_API_BASE_URL = import.meta.env.VITE_OPEN_FOOD_FACTS_API_BASE_URL;
@@ -8,7 +8,7 @@ const USER_AGENT = import.meta.env.VITE_USER_AGENT; // Replace with your app's i
 
 export async function getOpenFoodFactsProduct(barcodeNumber: string): Promise<{
     success: boolean, 
-    data?: Omit<PantryIngredient, 'id'> 
+    data?: BarcodeIngredient
 }> {
     const url = `${OPEN_FOOD_FACTS_API_BASE_URL}${barcodeNumber}`;
     const headers = { 'User-Agent': USER_AGENT };
@@ -56,7 +56,8 @@ export async function getOpenFoodFactsProduct(barcodeNumber: string): Promise<{
                 type: "Other",
                 location: "Pantry",
                 createdDate: new Date(),
-                shop: product.stores
+                shop: product.stores,
+                barcode: barcodeNumber
             }
         }
     } catch (error: unknown) {
@@ -70,7 +71,8 @@ export async function getOpenFoodFactsProduct(barcodeNumber: string): Promise<{
                 type: "Other",
                 location: "Pantry",
                 createdDate: new Date(),
-                shop: ""
+                shop: "",
+                barcode: barcodeNumber
             }
         }
     }
