@@ -23,22 +23,6 @@ const createQuantityField: FormFieldExtended = {
     }]
 }
 
-const updateQuantityField: FormFieldExtended = {
-    ...createQuantityField,
-    type: 'reduceQuantity',
-    extraFields: [{
-        name: 'unit', label: 'Unit', type: 'select', 
-        options: getUnits(true)
-    },
-    {
-        name: 'reduce_quantity', label: 'Quantity', type: 'quantity', 
-        min: 0, step: 0.01, required: false, 
-        placeholder: 'e.g., 500', extraFields:[{
-            name: 'reduce_unit', label: 'Unit', type: 'select',
-            options: getUnits()
-        }]
-    }]
-}
 
 export const createFields: FormFieldExtended[] = [
     ...defaultPantryFormFields,
@@ -47,5 +31,5 @@ export const createFields: FormFieldExtended[] = [
 
 export const updateFields: FormFieldExtended[] = [
     ...defaultPantryFormFields,
-    updateQuantityField
+    createQuantityField
 ]  

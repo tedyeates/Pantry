@@ -1,10 +1,9 @@
 import { DataTable, type ColumnDefinition } from '@/lib/components/Table';
-import type { DialogData, FirebaseIngredient, Ingredient, PantryIngredient, UnitExtended } from '@/lib/schemas/schema';
+import type { DialogData, FirebaseIngredient, Ingredient, PantryIngredient } from '@/lib/schemas/schema';
 import { useEffect, useState } from 'react';
 import DataDialog from '../components/Dialog';
 import { Button } from '@/components/ui/button';
 import { useFirestore } from '../context/Firebase';
-import { reduceQuantity } from '@/utils/quantity';
 import { Timestamp } from 'firebase/firestore';
 import { createFields, updateFields } from '@/utils/fieldData';
 
@@ -51,28 +50,7 @@ function Pantry() {
         setIsDialogOpen(true);
     }
 
-    const handleReduceQuantity = (data: PantryIngredient): PantryIngredient => {
-        if (!("reduce_quantity" in data && "reduce_unit" in data)) return data;
-        
-        const { val, unit} = reduceQuantity(
-            data.quantity, 
-            data.unit, 
-            data.reduce_quantity as number, 
-            data.reduce_unit as UnitExtended
-        )
-
-        delete data.reduce_quantity;
-        delete data.reduce_unit;
-
-        return {
-            ...data,
-            quantity: val,
-            unit: unit
-        }
-    }
-
     const handleSaveIngredient = async (data: PantryIngredient) => {
-        data = handleReduceQuantity(data);
         const firebaseData = {...data, createdDate: Timestamp.fromDate(new Date())}
 
         try {
