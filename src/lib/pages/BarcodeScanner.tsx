@@ -45,11 +45,7 @@ export default function BarcodeScanner() {
             console.log(barcode)
             console.log(productResult)
     
-            let ingredient = null
-            if (!productResult.success) {
-                console.error("Product not found or error fetching data for barcode:", barcode);
-                ingredient = await getDataById(BARCODE_OBJECT_TYPE, barcode) as BarcodeIngredient;
-            }
+            const ingredient = await getDataById(BARCODE_OBJECT_TYPE, barcode) as BarcodeIngredient;
 
             if (ingredient) {
                 setScannedItems(prevItems => [...prevItems, ingredient]);
@@ -128,10 +124,12 @@ export default function BarcodeScanner() {
 
         const {val, unit} = convertUnit(quantity, oldUnit, newUnit)
 
-        let newItems = getScannedItem(scannedItems, index, field.name, val)
-        newItems = getScannedItem(newItems, index, unitFieldName, unit)
-
-        setScannedItems(newItems)
+        setScannedItems(items => items.map((item, i) => {
+            if (i === index) {
+                return { ...item, [field.name]: val, [unitFieldName]: unit };
+            }
+            return item;
+        }));
     }
 
     const handleSelectChange = (
@@ -167,11 +165,11 @@ export default function BarcodeScanner() {
 
     return (
         <div>
-            <div className="mb-4">
+            <div className="mb-4 flex justify-center sm:justify-start">
                 {!scanning ? (
-                    <Button onClick={startScan}>Start Camera Scan</Button>
+                    <Button onClick={startScan} className="w-full sm:w-auto">Start Camera Scan</Button>
                 ) : (
-                    <Button variant="destructive" onClick={stopScan}>Stop Camera</Button>
+                    <Button variant="destructive" onClick={stopScan} className="w-full sm:w-auto">Stop Camera</Button>
                 )}
             </div>
 
@@ -183,8 +181,8 @@ export default function BarcodeScanner() {
             <div className="space-y-4 mt-4">
                 {scannedItems.map((item, index) => (
                     <Card key={index}>
-                        <CardHeader className="flex flex-row items-end justify-between pb-2">
-                            <div key={barcodeField.name} className="space-y-2">
+                        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4 pb-2">
+                            <div key={barcodeField.name} className="space-y-2 w-full sm:w-auto">
                                 <Label htmlFor={barcodeField.name}>{barcodeField.label}</Label>
                                 <Field<PantryIngredient>
                                     field={barcodeField}
@@ -207,7 +205,7 @@ export default function BarcodeScanner() {
                                     }}
                                 />
                             </div>
-                            <div className="flex flex-row items-end gap-1">
+                            <div className="flex flex-row items-end gap-2 self-end">
                                 <Button size="icon" onClick={() => handleSaveBarcode(index)} disabled={isLoading}>
                                     <Save className="h-4 w-4" />
                                 </Button>
@@ -248,8 +246,8 @@ export default function BarcodeScanner() {
             </div>
 
             {scannedItems.length > 0 && (
-                <div className="flex justify-end mt-6">
-                    <Button onClick={handleSaveAll} disabled={isLoading}>
+                <div className="flex justify-center sm:justify-end mt-6">
+                    <Button onClick={handleSaveAll} disabled={isLoading} className="w-full sm:w-auto">
                         <Save className="mr-2 h-4 w-4" /> Save All to Pantry
                     </Button>
                 </div>

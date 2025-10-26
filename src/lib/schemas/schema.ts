@@ -18,7 +18,6 @@ export type Ingredient = {
     unit: UnitExtended;
     type: string; // e.g. meat, veg, carb
     location: string; // where the item is stored
-    shop: string;
 }
 
 export type FirebaseIngredient = Ingredient & { 
@@ -31,6 +30,7 @@ export type PantryIngredient = Omit<Ingredient, 'id'> & {
 
 export type BarcodeIngredient = PantryIngredient & { 
     barcode: string;
+    shop: string;
 };
 
 
