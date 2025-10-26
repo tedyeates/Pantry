@@ -102,10 +102,8 @@ function Pantry() {
 
     useEffect(() => {
         const unsubscribe = getData(PANTRY_OBJECT_TYPE);
-        if (!unsubscribe) return;
-
-        return () => unsubscribe();
-    })
+        return () => unsubscribe && unsubscribe();
+    }, [])
 
     return (
         <>

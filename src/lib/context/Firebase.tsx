@@ -1,4 +1,4 @@
-import { onAuthStateChanged, signInAnonymously, signInWithCustomToken, type Unsubscribe } from "firebase/auth";
+import { GoogleAuthProvider, type User, createUserWithEmailAndPassword, onAuthStateChanged, signInWithEmailAndPassword, signInWithPopup, signOut as firebaseSignOut, type Unsubscribe } from "firebase/auth";
 import { addDoc, collection, deleteDoc, doc, getDoc, onSnapshot, setDoc, updateDoc, writeBatch } from 'firebase/firestore';
 import { createContext, useContext, useEffect, useState } from "react";
 import { auth, db } from "../../utils/firebase";
@@ -9,11 +9,16 @@ type FirestoreContextValue<T> = {
     data: T[],
     createData: (data: Omit<T, 'id'>, objectType: string) => Promise<void>,
     createMultipleData: (data: Omit<T, 'id'>[], objectType: string) => Promise<void>,
+    signInWithGoogle: () => Promise<void>,
+    signInWithEmail: (email: string, password: string) => Promise<void>,
+    signUpWithEmail: (email: string, password: string) => Promise<void>,
+    signOut: () => Promise<void>,
     updateData: (data: Omit<T, 'id'>, objectType: string, id?: string,) => void,
     upsertData: (data: Omit<T, 'id'>, objectType: string, id?: string,) => void,
     deleteData: (objectType: string, id?: string) => void,
     getData: (objectType: string) => Unsubscribe | void,
-    getDataById: (objectType: string, id: string) => Promise<T | null | undefined>
+    getDataById: (objectType: string, id: string) => Promise<T | null | undefined>,
+    user: User | null
 };
 
 const FirestoreContext = createContext<FirestoreContextValue<unknown>>({
@@ -22,14 +27,18 @@ const FirestoreContext = createContext<FirestoreContextValue<unknown>>({
     data: [],
     createData: async () => {},
     createMultipleData: async () => {},
+    signInWithGoogle: async () => {},
+    signInWithEmail: async () => {},
+    signUpWithEmail: async () => {},
+    signOut: async () => {},
     updateData: () => {},
     upsertData: () => {},
     deleteData: () => {},
     getData: () => {},
-    getDataById: async () => null
+    getDataById: async () => null,
+    user: null
 })
 
-const initialAuthToken = null
 const appId = import.meta.env.VITE_FIREBASE_APP_NAME;
 
 type FirestoreProviderProps = { 
@@ -38,40 +47,52 @@ type FirestoreProviderProps = {
 
 function FirestoreProvider<T>({ children }: FirestoreProviderProps) {
     const [userId, setUserId] = useState<string | null>(null);
+    const [user, setUser] = useState<User | null>(null);
     const [isAuthReady, setIsAuthReady] = useState<boolean>(false);
     const [data, setData] = useState<T[]>([] as T[]);
 
     useEffect(() => {
-        const initializeFirebase = async () => {
-            try {
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    await signInAnonymously(auth);
-                }
-            } catch (error: unknown) {
-                console.error("Error signing in:", error);
-            }
-        };
-
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
+        const unsubscribe = onAuthStateChanged(auth, async (user) => {
             if (user) {
-                setUserId(user.uid);
-            } else {
-                // If no user, and we haven't tried signing in with custom token, try anonymous
-                if (!initialAuthToken) {
-                    setUserId(crypto.randomUUID()); // Fallback for anonymous users if no token
+                // User is authenticated with Firebase, now check if they are authorized.
+                const userDocRef = doc(db, 'allowed_users', user.email!);
+                const userDoc = await getDoc(userDocRef);
+
+                if (userDoc.exists()) {
+                    // User is authorized, set user state.
+                    setUser(user);
+                    setUserId(user.uid);
+                } else {
+                    // User is not authorized, sign them out immediately.
+                    console.error(`Unauthorized user signed in: ${user.email}. Signing out.`);
+                    await firebaseSignOut(auth);
+                    setUser(null);
+                    setUserId(null);
                 }
+            } else {
+                // User is signed out.
+                setUser(null);
+                setUserId(null);
             }
             setIsAuthReady(true); // Auth state is ready
         });
 
-        if (!isAuthReady) { // Only initialize if not already ready
-            initializeFirebase();
-        }
-
         return () => unsubscribe();
-    }, [isAuthReady]); // Depend on isAuthReady to ensure it runs once after initial check
+    }, []);
+
+    const googleProvider = new GoogleAuthProvider();
+    const signInWithGoogle = async () => {
+        try {
+            // The onAuthStateChanged observer will handle the authorization check.
+            await signInWithPopup(auth, googleProvider);
+        } catch (error) {
+            console.error("Sign-in failed:", error);
+            throw error;
+        }
+    };
+    const signInWithEmail = (email: string, password: string) => signInWithEmailAndPassword(auth, email, password).then(() => {});
+    const signUpWithEmail = (email: string, password: string) => createUserWithEmailAndPassword(auth, email, password).then(() => {});
+    const signOut = () => firebaseSignOut(auth);
 
     function getData(objectType: string) {
         if (!userId) return;
@@ -166,11 +187,16 @@ function FirestoreProvider<T>({ children }: FirestoreProviderProps) {
         data, 
         createData, 
         createMultipleData,
+        signInWithGoogle,
+        signInWithEmail,
+        signUpWithEmail,
+        signOut,
         updateData,
         upsertData,
         deleteData,
         getData,
-        getDataById
+        getDataById,
+        user
     };
 
     return (
