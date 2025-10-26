@@ -44,34 +44,62 @@ export function DataTable<T extends { id: string | number }>({
     }
     
     return (
-        <Table>
-            <TableHeader>
-                <TableRow>
-                {columns.map((column, index) => (
-                    <TableHead key={column.accessorKey?.toString() || index}>{column.header}</TableHead>
+        <div className="w-full">
+            {/* Standard Table for medium screens and up */}
+            <div className="hidden sm:block">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            {columns.map((column, index) => (
+                                <TableHead key={column.accessorKey?.toString() || index}>{column.header}</TableHead>
+                            ))}
+                            <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {data.length ? data.map((item) => (
+                            <TableRow onClick={() => openEditDialog(item)} key={item.id} className="cursor-pointer hover:bg-gray-50">
+                                {columns.map((column, colIndex) => (
+                                    <TableCell key={column.accessorKey?.toString() || colIndex}>
+                                        {column.accessorFn ? column.accessorFn(item) : String(item[column.accessorKey!] ?? '')}
+                                    </TableCell>
+                                ))}
+                                <TableCell className="text-right">
+                                    <Button variant="destructive" size="sm" onClick={(event) => onDelete(event, String(item.id))}>Delete</Button>
+                                </TableCell>
+                            </TableRow>
+                        )) : (
+                            <TableRow>
+                                <TableCell colSpan={columns.length + 1} className="text-center">No data available.</TableCell>
+                            </TableRow>
+                        )}
+                    </TableBody>
+                </Table>
+            </div>
+
+            {/* Card-based layout for small screens */}
+            <div className="block sm:hidden space-y-4">
+                {data.map((item) => (
+                    <div key={item.id} className="border rounded-lg p-4 bg-card text-card-foreground shadow-sm">
+                        <div onClick={() => openEditDialog(item)} className="space-y-3 mb-4">
+                            {columns.map((column, colIndex) => (
+                                <div key={colIndex} className="flex justify-between items-start text-sm">
+                                    <span className="font-semibold text-muted-foreground">{column.header}</span>
+                                    <span className="text-right break-all">
+                                        {column.accessorFn ? column.accessorFn(item) : String(item[column.accessorKey!] ?? '')}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="flex justify-end border-t pt-4">
+                             <Button variant="destructive" size="sm" onClick={(event) => onDelete(event, String(item.id))}>Delete</Button>
+                        </div>
+                    </div>
                 ))}
-                </TableRow>
-            </TableHeader>
-            <TableBody>
-            {data.length ? (
-                data.map((item) => (
-                    <TableRow onClick={() => openEditDialog(item)} key={item.id}> {/* Assuming each data item has a unique 'id' */}
-                        {columns.map((column, colIndex) => (
-                        <TableCell key={column.accessorKey?.toString() || colIndex} className="cursor-pointer hover:bg-gray-50">
-                            {column.accessorFn ? column.accessorFn(item) : item[column.accessorKey!] as string}
-                        </TableCell>
-                        ))}
-                        <TableCell className="flex justify-end">
-                            <Button variant="destructive" onClick={(event) => onDelete(event, String(item.id))}>Delete</Button>
-                        </TableCell> 
-                    </TableRow>
-                ))
-            ) : (
-                <TableRow>
-                    <TableCell colSpan={columns.length}>No data available.</TableCell>
-                </TableRow>// new delete button column
-            )}
-            </TableBody>
-        </Table>
+                 {data.length === 0 && (
+                    <div className="text-center text-muted-foreground py-8">No data available.</div>
+                )}
+            </div>
+        </div>
     );
 }
