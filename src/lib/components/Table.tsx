@@ -7,8 +7,8 @@ import {
     TableHead,
     TableHeader,
     TableRow,
-} from '@/components/ui/table'; // Adjust import path if necessary
-import { useFirestore } from '../context/Firebase';
+} from '@/components/ui/table';
+import { useFirestore } from '../hooks/useFirestore';
 
 // Define a generic interface for column definitions
 // T is the type of the data object (e.g., PantryItem, Recipe)
@@ -30,17 +30,17 @@ interface DataTableProps<T> {
 
 // DataTable component
 // It's a generic component, so you specify the type T when using it (e.g., DataTable<PantryItem>)
-export function DataTable<T extends { id: string | number }>({ 
+export function DataTable<T extends { id: string }>({ 
     columns, 
     data,
     openEditDialog,
     objectType
-}: DataTableProps<T>) {
-    const { deleteData } = useFirestore<T>();
+}: DataTableProps<T>) { 
+    const { deleteData } = useFirestore<T>(objectType);
 
     const onDelete = async (event: React.MouseEvent<HTMLButtonElement>, id: string) => {
         event.stopPropagation();
-        await deleteData(objectType, id);
+        await deleteData(id);
     }
     
     return (
@@ -92,11 +92,11 @@ export function DataTable<T extends { id: string | number }>({
                             ))}
                         </div>
                         <div className="flex justify-end border-t pt-4">
-                             <Button variant="destructive" size="sm" onClick={(event) => onDelete(event, String(item.id))}>Delete</Button>
+                            <Button variant="destructive" size="sm" onClick={(event) => onDelete(event, String(item.id))}>Delete</Button>
                         </div>
                     </div>
                 ))}
-                 {data.length === 0 && (
+                {data.length === 0 && (
                     <div className="text-center text-muted-foreground py-8">No data available.</div>
                 )}
             </div>

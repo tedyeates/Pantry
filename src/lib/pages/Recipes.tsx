@@ -1,6 +1,6 @@
-import type { DialogData, FormFieldExtended, Recipe } from "@/lib/schemas/schema";
+import type { DialogData, FirebaseRecipe, FormFieldExtended, PantryRecipe, Recipe } from "@/lib/schemas/schema";
 import { useState } from "react";
-import { useFirestore } from "../context/Firebase";
+import { useFirestore } from "../hooks/useFirestore";
 import { DataTable, type ColumnDefinition } from "../components/Table";
 import { Button } from "@/components/ui/button";
 import DataDialog from "../components/Dialog";
@@ -21,7 +21,7 @@ function Recipes() {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     // const [removeQuantity, setRemoveQuantity] = useState(1);
 
-    const { data, createData, updateData } = useFirestore<Recipe>();
+    const { data, createData, updateData } = useFirestore<PantryRecipe, FirebaseRecipe>(RECIPE_OBJECT_TYPE);
 
     const recipeColumns: ColumnDefinition<Recipe>[] = [
         { header: "Name", accessorKey: "name" },
@@ -152,16 +152,21 @@ function Recipes() {
         setIsDialogOpen(true);
     }
 
-    const handleSaveIngredient = async (data: Omit<Recipe, 'id'>) => {
+    const handleSaveIngredient = async (data: PantryRecipe) => {
         try {
             if (dialog.dialogType === 'create') {
-                await createData(data, RECIPE_OBJECT_TYPE);
+                await createData(data);
             }
+
+            if (!dialog.initialData?.id) {
+                setIsDialogOpen(false);
+                return;
+            }
+
             else if (dialog.dialogType === 'update') {
                 await updateData(
-                    data, 
-                    RECIPE_OBJECT_TYPE,
-                    dialog.initialData?.id as string | undefined
+                    dialog.initialData!.id,
+                    data
                 );
             }
 
@@ -180,7 +185,7 @@ function Recipes() {
                 </Button>
             </div>
 
-            <DataDialog<Recipe>
+            <DataDialog<PantryRecipe>
                 isOpen={isDialogOpen}
                 showModal={setIsDialogOpen}
                 handleSave={handleSaveIngredient}

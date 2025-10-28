@@ -1,10 +1,9 @@
 import { DataTable, type ColumnDefinition } from '@/lib/components/Table';
 import type { DialogData, FirebaseIngredient, Ingredient, PantryIngredient } from '@/lib/schemas/schema';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import DataDialog from '../components/Dialog';
 import { Button } from '@/components/ui/button';
-import { useFirestore } from '../context/Firebase';
-import { Timestamp } from 'firebase/firestore';
+import { useFirestore } from '../hooks/useFirestore';
 import { createFields, updateFields } from '@/utils/fieldData';
 
 
@@ -21,7 +20,7 @@ function Pantry() {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     // const [removeQuantity, setRemoveQuantity] = useState(1);
 
-    const { data, createData, updateData, deleteData, getData } = useFirestore<FirebaseIngredient>();
+    const { data, createData, updateData, deleteData } = useFirestore<PantryIngredient, FirebaseIngredient>(PANTRY_OBJECT_TYPE);
 
     const pantryColumns: ColumnDefinition<FirebaseIngredient>[] = [
         { header: "Name", accessorKey: "name" },
@@ -51,24 +50,23 @@ function Pantry() {
     }
 
     const handleSaveIngredient = async (data: PantryIngredient) => {
-        const firebaseData = {...data, createdDate: Timestamp.fromDate(new Date())}
-
         try {
             if (dialog.dialogType === 'create') {
-                await createData(firebaseData, PANTRY_OBJECT_TYPE);
+                await createData(data);
+            }
+
+            if (!dialog.initialData?.id) {
+                setIsDialogOpen(false);
+                return;
             }
 
             if (dialog.dialogType === 'update' && data.quantity <= 0) {
-                await deleteData(
-                    PANTRY_OBJECT_TYPE,
-                    dialog.initialData?.id as string | undefined
-                );
+                await deleteData(dialog.initialData.id);
             }
             else if (dialog.dialogType === 'update') {
                 await updateData(
-                    firebaseData, 
-                    PANTRY_OBJECT_TYPE,
-                    dialog.initialData?.id as string | undefined
+                    dialog.initialData!.id,
+                    data
                 );
             }
 
@@ -77,11 +75,6 @@ function Pantry() {
             console.error("Error submitting data:", error);
         }
     }
-
-    useEffect(() => {
-        const unsubscribe = getData(PANTRY_OBJECT_TYPE);
-        return () => unsubscribe && unsubscribe();
-    }, [])
 
     return (
         <>

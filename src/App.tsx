@@ -1,15 +1,14 @@
 import './App.css'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import Pantry from './lib/pages/Pantry';
-import Recipes from './lib/pages/Recipes';
-import { FirestoreProvider, useFirestore } from './lib/context/Firebase';
-import type { BarcodeIngredient, Ingredient, Recipe } from './lib/schemas/schema';
+import Recipes from './lib/pages/Recipes'; 
 import BarcodeScanner from './lib/pages/BarcodeScanner';
 import Login from './lib/pages/Login';
 import { Button } from './components/ui/button';
+import { AuthProvider, useAuth } from './lib/context/Auth';
 
 function AppContent() {
-    const { user, isAuthReady, signOut } = useFirestore();
+    const { user, isAuthReady, signOut } = useAuth();
 
     if (!isAuthReady) {
         return <><div>Loading...</div><Button variant="outline" onClick={signOut}>Sign Out</Button></>; // Or a proper loading spinner
@@ -32,7 +31,7 @@ function AppContent() {
                     <TabsTrigger value="barcode">Barcode Scanner</TabsTrigger>
                 </TabsList>
                 <TabsContent value="pantry"><Pantry /></TabsContent>
-                <TabsContent value="recipes"><Recipes /></TabsContent>
+                <TabsContent value="recipes"><Recipes/></TabsContent>
                 <TabsContent value="barcode"><BarcodeScanner /></TabsContent>
             </Tabs>
         </main>
@@ -41,9 +40,9 @@ function AppContent() {
 
 function App() {
     return (
-        <FirestoreProvider<Ingredient | Recipe | BarcodeIngredient>>
+        <AuthProvider>
             <AppContent />
-        </FirestoreProvider>
+        </AuthProvider>
     )
 }
 

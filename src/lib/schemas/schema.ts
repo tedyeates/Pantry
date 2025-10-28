@@ -20,18 +20,34 @@ export type Ingredient = {
     location: string; // where the item is stored
 }
 
+type BarcodeData = {
+    barcode: string;
+    shop: string;
+}
+
+export type FirebaseObject = {
+    createdDate: Timestamp;
+}
+
 export type FirebaseIngredient = Ingredient & { 
     createdDate: Timestamp;
 };
+
+export type FirebaseRecipe = Recipe & { 
+    createdDate: Timestamp;
+};
+
+export type BarcodeFirebaseIngredient = FirebaseIngredient & BarcodeData
 
 export type PantryIngredient = Omit<Ingredient, 'id'> & { 
     createdDate: Date;
 };
 
-export type BarcodeIngredient = PantryIngredient & { 
-    barcode: string;
-    shop: string;
+export type PantryRecipe = Omit<Recipe, 'id'> & { 
+    createdDate: Date;
 };
+
+export type BarcodeIngredient = PantryIngredient & BarcodeData
 
 
 export type PantryIngredientValues = Date | string | number | UnitExtended;

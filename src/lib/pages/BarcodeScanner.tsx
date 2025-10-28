@@ -3,16 +3,17 @@
 import { useRef, useState, useEffect } from "react";
 import type { Result } from "@zxing/library";
 import { BrowserMultiFormatReader, NotFoundException } from "@zxing/library";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button"; 
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
-import type { BarcodeIngredient, FormFieldExtended, PantryIngredient, SupportedObjects, UnitExtended } from "@/lib/schemas/schema";
+import type { BarcodeFirebaseIngredient, BarcodeIngredient, FirebaseIngredient, FormFieldExtended, PantryIngredient, SupportedObjects, UnitExtended } from "@/lib/schemas/schema";
 import { getOpenFoodFactsProduct } from "@/utils/foodfacts";
-import { useFirestore } from "../context/Firebase";
+import { useFirestore } from "../hooks/useFirestore";
 import { Trash2, Save } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import Field from "../components/fields/Field";
 import { convertUnit } from "@/utils/quantity";
 import { createFields } from "@/utils/fieldData";
+import { convertFirebaseObject } from "@/utils/typeCoversion";
 
 const PANTRY_OBJECT_TYPE = "pantry"
 const BARCODE_OBJECT_TYPE = "barcode"
@@ -21,9 +22,10 @@ export default function BarcodeScanner() {
     const videoRef = useRef<HTMLVideoElement>(null);
     const [scanning, setScanning] = useState(false);
     const codeReaderRef = useRef<BrowserMultiFormatReader | null>(null);
-    const [scannedItems, setScannedItems] = useState<Omit<BarcodeIngredient, 'id'>[]>([]);
+    const [scannedItems, setScannedItems] = useState<BarcodeIngredient[]>([]);
     const [isLoading, setIsLoading] = useState(false);
-    const { createMultipleData, upsertData, getDataById } = useFirestore<PantryIngredient>();
+    const pantryStore = useFirestore<PantryIngredient, FirebaseIngredient>(PANTRY_OBJECT_TYPE);
+    const barcodeStore = useFirestore<BarcodeIngredient,BarcodeFirebaseIngredient>(BARCODE_OBJECT_TYPE);
 
     const barcodeField: FormFieldExtended = {
         name: 'barcode', label: 'Barcode', type: 'text', required: true, placeholder: "e.g. 2202345"
@@ -42,16 +44,13 @@ export default function BarcodeScanner() {
             setIsLoading(true);
             const barcode = result.getText();
             const productResult = await getOpenFoodFactsProduct(barcode);
-            console.log(barcode)
-            console.log(productResult)
     
-            const ingredient = await getDataById(BARCODE_OBJECT_TYPE, barcode) as BarcodeIngredient;
-
+            const ingredient = await barcodeStore.getDataById(barcode);
             if (ingredient) {
-                setScannedItems(prevItems => [...prevItems, ingredient]);
+                const pantryIngredient = convertFirebaseObject<BarcodeFirebaseIngredient>(ingredient);
+                setScannedItems(prevItems => [...prevItems, pantryIngredient]);
             }
-
-            if (productResult.success || !ingredient) {
+            else if (productResult.success) {
                 setScannedItems(prevItems => [...prevItems, productResult.data!]);
             }
             
@@ -89,7 +88,7 @@ export default function BarcodeScanner() {
     };
 
     const getScannedItem = (
-        items: Omit<BarcodeIngredient, 'id'>[],
+        items: BarcodeIngredient[],
         index: number,
         fieldName: string,
         value: string | number | SupportedObjects[],
@@ -144,7 +143,7 @@ export default function BarcodeScanner() {
     const handleSaveAll = async () => {
         setIsLoading(true);
         try {
-            await createMultipleData(scannedItems, PANTRY_OBJECT_TYPE);
+            await pantryStore.createMultipleData(scannedItems);
             setScannedItems([]); 
         } catch (error) {
             console.error("Error saving items to Firebase:", error);
@@ -156,7 +155,7 @@ export default function BarcodeScanner() {
         // Save template to use for that barcode
         setIsLoading(true);
         try {
-            await upsertData(scannedItems[index], BARCODE_OBJECT_TYPE, scannedItems[index].barcode);
+            await barcodeStore.upsertData(scannedItems[index].barcode, scannedItems[index]);
         } catch (error) {
             console.error("Error saving items to Firebase:", error);
         }
@@ -165,13 +164,6 @@ export default function BarcodeScanner() {
 
     return (
         <div>
-            <div className="mb-4 flex justify-center sm:justify-start">
-                {!scanning ? (
-                    <Button onClick={startScan} className="w-full sm:w-auto">Start Camera Scan</Button>
-                ) : (
-                    <Button variant="destructive" onClick={stopScan} className="w-full sm:w-auto">Stop Camera</Button>
-                )}
-            </div>
 
             {/* Video feed will only be visible when scanning */}
             <video ref={videoRef} className={`w-full rounded-lg border border-gray-200 ${!scanning && 'hidden'}`} />
@@ -245,13 +237,20 @@ export default function BarcodeScanner() {
                 ))}
             </div>
 
-            {scannedItems.length > 0 && (
-                <div className="flex justify-center sm:justify-end mt-6">
+            <div className="flex flex-col sm:flex-row justify-center sm:justify-end mt-6 gap-2">
+                {!scanning ? (
+                    <Button onClick={startScan} className="w-full sm:w-auto">Add Another Item</Button>
+                ) : (
+                    <Button variant="destructive" onClick={stopScan} className="w-full sm:w-auto">Stop Camera</Button>
+                )}
+
+                {scannedItems.length > 0 && (
                     <Button onClick={handleSaveAll} disabled={isLoading} className="w-full sm:w-auto">
                         <Save className="mr-2 h-4 w-4" /> Save All to Pantry
                     </Button>
-                </div>
-            )}
+                )}
+            </div>
         </div>
+
     );
 }

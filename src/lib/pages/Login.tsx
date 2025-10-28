@@ -2,10 +2,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { AuthError } from "firebase/auth";
 import { useState } from "react";
-import { useFirestore } from "../context/Firebase";
+import { useAuth } from "../context/Auth";
 
 export function Login() {
-    const { signInWithGoogle } = useFirestore();
+    const { signInWithGoogle } = useAuth();
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
 
