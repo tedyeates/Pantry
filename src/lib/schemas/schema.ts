@@ -12,7 +12,7 @@ export type Recipe = {
 export type UnitExtended = Unit | 'unit' | 'tbsp';
 
 export type Ingredient = {
-    id: string;
+    id?: string;
     name: string;
     quantity: number;
     unit: UnitExtended;
@@ -20,35 +20,38 @@ export type Ingredient = {
     location: string; // where the item is stored
 }
 
+type DropdownData = {
+    name: string;
+}
+
+
 type BarcodeData = {
     barcode: string;
     shop: string;
 }
 
 export type FirebaseObject = {
+    id: string;
     createdDate: Timestamp;
 }
 
-export type FirebaseIngredient = Ingredient & { 
-    createdDate: Timestamp;
-};
+export type InternalObject = {
+    id: string;
+    createdDate: Date;
+}
 
-export type FirebaseRecipe = Recipe & { 
-    createdDate: Timestamp;
-};
+export type FirebaseIngredient = Ingredient & FirebaseObject
+export type PantryIngredient = Ingredient & InternalObject
+
+export type FirebaseRecipe = Recipe & FirebaseObject
+export type PantryRecipe = Recipe & InternalObject
 
 export type BarcodeFirebaseIngredient = FirebaseIngredient & BarcodeData
-
-export type PantryIngredient = Omit<Ingredient, 'id'> & { 
-    createdDate: Date;
-};
-
-export type PantryRecipe = Omit<Recipe, 'id'> & { 
-    createdDate: Date;
-};
-
 export type BarcodeIngredient = PantryIngredient & BarcodeData
 
+
+export type PantryData = InternalObject & DropdownData
+export type FirebaseData = FirebaseObject & DropdownData
 
 export type PantryIngredientValues = Date | string | number | UnitExtended;
 
@@ -63,13 +66,19 @@ export type SupportedObjects = Recipe | Ingredient;
 
 export type SupportedFields = string | number | boolean | Date | number | Ingredient[];
 
+export type SelectOption = {
+    value: string;
+    label: string;
+}
+
 export type FormField = {
     name: string;
     label: string;
-    type: 'text' | 'number' |'select' | 'quantity' | 'reduceQuantity' | 'textarea' | 'arrayOfObjects';
+    type: 'text' | 'number' |'select' | 'quantity' | 'reduceQuantity' | 
+    'textarea' | 'arrayOfObjects' | 'select-firebase';
     placeholder?: string;
     required?: boolean;
-    options?: { value: string; label: string }[];
+    options?: SelectOption[];
     relatedCollection?: string;
     min?: number;
     step?: number;

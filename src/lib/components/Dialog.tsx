@@ -14,7 +14,7 @@ type DataDialogueProps<T> = {
     fields: FormField[];
     initialData?: Partial<T>;
     submitButtonText?: string;
-    handleSave: (data: Omit<T, 'id'>) => Promise<void>;
+    handleSave: (data: T) => Promise<void>;
 }
 
 function DataDialog<T>({

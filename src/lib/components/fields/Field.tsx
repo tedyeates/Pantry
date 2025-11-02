@@ -27,6 +27,15 @@ export default function Field<T>({
 
     function renderField() {
         const fieldOptions = {
+            "select-firebase": (
+                <FieldSelect
+                    key={field.name}
+                    field={field}
+                    formData={formData}
+                    handleSelectChange={handleSelectChange}
+                    className="w-full"
+                />
+            ),
             "select": (
                 <FieldSelect
                     key={field.name}

@@ -1,8 +1,8 @@
-import type { FirebaseObject } from "@/lib/schemas/schema";
+import type { FirebaseObject, InternalObject } from "@/lib/schemas/schema";
 
-export function convertFirebaseObject<T>(data: T & FirebaseObject) {
+export function convertFirebaseObject<U extends FirebaseObject, T extends InternalObject>(data: U): T {
     return {
         ...data,
         createdDate: data.createdDate.toDate()
-    }
+    } as unknown as T;
 }

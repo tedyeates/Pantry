@@ -9,17 +9,17 @@ import {
     updateDoc,
     writeBatch,
 } from 'firebase/firestore';
-import { useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { db } from "../../utils/firebase";
 import { useAuth } from '../context/Auth';
 
 const appId = import.meta.env.VITE_FIREBASE_APP_NAME;
 
-export function useFirestore<U, T extends { id: string }>(objectType: string) {
+export function useFirestore<T, U extends { id: string }>(objectType: string) {
     const { userId } = useAuth();
-    const [data, setData] = useState<T[]>([]);
+    const [data, setData] = useState<U[]>([]);
 
-    useEffect(() => {
+    const syncData = useCallback(() => {
         if (!userId) {
             setData([]);
             return;
@@ -31,10 +31,10 @@ export function useFirestore<U, T extends { id: string }>(objectType: string) {
         );
         const unsubscribe = onSnapshot(collectionRef, 
             (snapshot) => {
-                const data: T[] = snapshot.docs.map((doc) =>({
+                const data = snapshot.docs.map((doc) =>({
                     id: doc.id,
                     ...doc.data(),
-                } as T));
+                } as U));
                 setData(data);
             },
             (error) => {
@@ -43,7 +43,7 @@ export function useFirestore<U, T extends { id: string }>(objectType: string) {
             }
         );
 
-        return () => unsubscribe();
+        return unsubscribe;
     }, [userId, objectType]);
 
     async function getDataById(id: string) {
@@ -53,14 +53,14 @@ export function useFirestore<U, T extends { id: string }>(objectType: string) {
         const docSnapshot = await getDoc(docRef);
 
         if (docSnapshot.exists()) {
-        return { id: docSnapshot.id, ...docSnapshot.data() } as T;
+            return { id: docSnapshot.id, ...docSnapshot.data() } as U;
         } else {
-        console.log("No such document!");
-        return null;
+            console.log("No such document!");
+            return null;
         }
     }
 
-    async function createData(data: U) {
+    async function createData(data: T) {
         if (!userId) return;
 
         const collectionRef = collection(
@@ -74,7 +74,7 @@ export function useFirestore<U, T extends { id: string }>(objectType: string) {
         });
     }
 
-    async function createMultipleData(data: U[]) {
+    async function createMultipleData(data: T[]) {
         if (!userId || data.length === 0) return;
 
         const batch = writeBatch(db);
@@ -93,14 +93,14 @@ export function useFirestore<U, T extends { id: string }>(objectType: string) {
         await batch.commit();
     }
 
-    async function updateData(id: string, data: Partial<U>) {
+    async function updateData(id: string, data: Partial<T>) {
         if (!userId) return;
 
         const docRef = doc(db, `artifacts/${appId}/users/${userId}/${objectType}`, id);
         await updateDoc(docRef, data);
     }
 
-    async function upsertData(id: string, data: Partial<U>) {
+    async function upsertData(id: string, data: Partial<T>) {
         if (!userId) return;
 
         const docRef = doc(db, `artifacts/${appId}/users/${userId}/${objectType}`, id);
@@ -123,5 +123,6 @@ export function useFirestore<U, T extends { id: string }>(objectType: string) {
         upsertData,
         deleteData,
         getDataById,
+        syncData,
     };
 }

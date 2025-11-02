@@ -1,36 +1,20 @@
-import type { DialogData, FirebaseRecipe, FormFieldExtended, PantryRecipe, Recipe } from "@/lib/schemas/schema";
-import { useState } from "react";
-import { useFirestore } from "../hooks/useFirestore";
-import { DataTable, type ColumnDefinition } from "../components/Table";
-import { Button } from "@/components/ui/button";
-import DataDialog from "../components/Dialog";
+import type { FirebaseRecipe, FormFieldExtended, Ingredient, PantryRecipe } from "@/lib/schemas/schema";
+import { type ColumnDefinition } from "../components/Table";
 import { getUnits } from "@/utils/options";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import Page from "../components/Page";
 
 const RECIPE_OBJECT_TYPE = "recipe"
 
-function Recipes() {
-    const [dialog, setDialog] = useState<DialogData<Recipe>>({
-        title: '',
-        description: '',
-        initialData: undefined,
-        dialogType: 'create',
-        fields: []
-    });
-
-    const [isDialogOpen, setIsDialogOpen] = useState(false);
-    // const [removeQuantity, setRemoveQuantity] = useState(1);
-
-    const { data, createData, updateData } = useFirestore<PantryRecipe, FirebaseRecipe>(RECIPE_OBJECT_TYPE);
-
-    const recipeColumns: ColumnDefinition<Recipe>[] = [
+function Recipe() {
+    const recipeColumns: ColumnDefinition<PantryRecipe>[] = [
         { header: "Name", accessorKey: "name" },
         {
             header: "Ingredients",
             accessorKey: "ingredients", 
             accessorFn: (item) => {
                 const ingredientNames = item.ingredients
-                    ?.map((ingredient) => ingredient.name)
+                    ?.map((ingredient: Ingredient) => ingredient.name)
                     .join(', ');
 
                 const displaySummary = ingredientNames?.length > 40
@@ -47,7 +31,7 @@ function Recipes() {
                                     <TooltipContent className="p-2 text-left shadow-lg">
                                         <h4 className="font-semibold mb-1 text-sm">Full Ingredients:</h4>
                                         <ul className="list-disc list-inside space-y-0.5 text-xs">
-                                            {item.ingredients.map((ingredient, index) => (
+                                            {item.ingredients.map((ingredient: Ingredient, index: number) => (
                                             <li key={index}>
                                                 <span className="font-medium">{ingredient.name}</span>
                                                 <span className="ml-0.5">({ingredient.quantity} {ingredient.unit})</span>
@@ -133,77 +117,14 @@ function Recipes() {
         },
     ];
 
-    const openCreateDialog = () => {
-        setDialog({ 
-            title: 'Add Recipe', 
-            dialogType: 'create', 
-            fields: defaultRecipeFormFields 
-        });
-        setIsDialogOpen(true);
-    }
-
-    const openEditDialog = (recipe: Recipe) => {
-        setDialog({ 
-            title: 'Edit Item', 
-            dialogType: 'update', 
-            initialData: recipe, 
-            fields: defaultRecipeFormFields 
-        });
-        setIsDialogOpen(true);
-    }
-
-    const handleSaveIngredient = async (data: PantryRecipe) => {
-        try {
-            if (dialog.dialogType === 'create') {
-                await createData(data);
-            }
-
-            if (!dialog.initialData?.id) {
-                setIsDialogOpen(false);
-                return;
-            }
-
-            else if (dialog.dialogType === 'update') {
-                await updateData(
-                    dialog.initialData!.id,
-                    data
-                );
-            }
-
-            setIsDialogOpen(false);
-        } catch (error) {
-            console.error("Error submitting data:", error);
-        }
-    }
-
     return (
-        <>
-            {/* This div acts as a flexible container for the button */}
-            <div className="flex justify-end mb-4"> {/* flex container, pushes content to end (right), adds bottom margin */}
-                <Button onClick={() => openCreateDialog()} className="shadow-md"> {/* Added subtle shadow for visual depth */}
-                    Add New Item
-                </Button>
-            </div>
-
-            <DataDialog<PantryRecipe>
-                isOpen={isDialogOpen}
-                showModal={setIsDialogOpen}
-                handleSave={handleSaveIngredient}
-                {...dialog}
-            />
-
-            {data.length === 0 ? (
-                <p className="text-center text-gray-600 text-lg mt-8">Your pantry is empty. Add some items!</p>
-            ) : (
-                <DataTable
-                    columns={recipeColumns}
-                    data={data}
-                    openEditDialog={openEditDialog}
-                    objectType="recipe"
-                />
-            )}
-        </>
+        <Page<PantryRecipe, FirebaseRecipe>
+            object_type={RECIPE_OBJECT_TYPE}
+            columns={recipeColumns}
+            createFields={defaultRecipeFormFields}
+            updateFields={defaultRecipeFormFields}
+        />
     )
 }
 
-export default Recipes
+export default Recipe

@@ -8,7 +8,8 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import { useFirestore } from '../hooks/useFirestore';
+import { convertFirebaseObject } from '@/utils/typeCoversion';
+import type { FirebaseObject, InternalObject } from '../schemas/schema';
 
 // Define a generic interface for column definitions
 // T is the type of the data object (e.g., PantryItem, Recipe)
@@ -20,27 +21,60 @@ export interface ColumnDefinition<T> {
 }
 
 // Define the props for the DataTable component
-interface DataTableProps<T> {
+interface DataTableProps<T, U> {
     columns: ColumnDefinition<T>[]; // Array of column definitions
-    data: T[];
+    data: U[];
     openEditDialog: (item: T) => void;
-    objectType: string;
+    deleteData: (id: string) => Promise<void>;
 }
 
 
-// DataTable component
-// It's a generic component, so you specify the type T when using it (e.g., DataTable<PantryItem>)
-export function DataTable<T extends { id: string }>({ 
+export function DataTable<T extends InternalObject, U extends FirebaseObject>({ 
     columns, 
     data,
     openEditDialog,
-    objectType
-}: DataTableProps<T>) { 
-    const { deleteData } = useFirestore<T>(objectType);
-
+    deleteData
+}: DataTableProps<T, U>) { 
     const onDelete = async (event: React.MouseEvent<HTMLButtonElement>, id: string) => {
         event.stopPropagation();
         await deleteData(id);
+    }
+
+    function tableRow(item: U, smallScreen: boolean = false) {
+        const convertedItem = convertFirebaseObject<U, T>(item);
+
+        if (smallScreen) {
+            return (
+                <div key={item.id} className="border rounded-lg p-4 bg-card text-card-foreground shadow-sm">
+                    <div onClick={() => openEditDialog(convertedItem)} className="space-y-3 mb-4">
+                        {columns.map((column, colIndex) => (
+                            <div key={colIndex} className="flex justify-between items-start text-sm">
+                                <span className="font-semibold text-muted-foreground">{column.header}</span>
+                                <span className="text-right break-all">
+                                    {column.accessorFn ? column.accessorFn(convertedItem) : String(convertedItem[column.accessorKey!] ?? '')}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                    <div className="flex justify-end border-t pt-4">
+                        <Button variant="destructive" size="sm" onClick={(event) => onDelete(event, String(convertedItem.id))}>Delete</Button>
+                    </div>
+                </div>
+            )
+        }
+
+        return (
+            <TableRow onClick={() => openEditDialog(convertedItem)} key={item.id} className="cursor-pointer hover:bg-gray-50">
+                {columns.map((column, colIndex) => (
+                    <TableCell key={column.accessorKey?.toString() || colIndex}>
+                        {column.accessorFn ? column.accessorFn(convertedItem) : String(convertedItem[column.accessorKey!] ?? '')}
+                    </TableCell>
+                ))}
+                <TableCell className="text-right">
+                    <Button variant="destructive" size="sm" onClick={(event) => onDelete(event, String(item.id))}>Delete</Button>
+                </TableCell>
+            </TableRow>
+        )
     }
     
     return (
@@ -57,18 +91,7 @@ export function DataTable<T extends { id: string }>({
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {data.length ? data.map((item) => (
-                            <TableRow onClick={() => openEditDialog(item)} key={item.id} className="cursor-pointer hover:bg-gray-50">
-                                {columns.map((column, colIndex) => (
-                                    <TableCell key={column.accessorKey?.toString() || colIndex}>
-                                        {column.accessorFn ? column.accessorFn(item) : String(item[column.accessorKey!] ?? '')}
-                                    </TableCell>
-                                ))}
-                                <TableCell className="text-right">
-                                    <Button variant="destructive" size="sm" onClick={(event) => onDelete(event, String(item.id))}>Delete</Button>
-                                </TableCell>
-                            </TableRow>
-                        )) : (
+                        {data.length ? data.map((item) => tableRow(item)) : (
                             <TableRow>
                                 <TableCell colSpan={columns.length + 1} className="text-center">No data available.</TableCell>
                             </TableRow>
@@ -79,23 +102,7 @@ export function DataTable<T extends { id: string }>({
 
             {/* Card-based layout for small screens */}
             <div className="block sm:hidden space-y-4">
-                {data.map((item) => (
-                    <div key={item.id} className="border rounded-lg p-4 bg-card text-card-foreground shadow-sm">
-                        <div onClick={() => openEditDialog(item)} className="space-y-3 mb-4">
-                            {columns.map((column, colIndex) => (
-                                <div key={colIndex} className="flex justify-between items-start text-sm">
-                                    <span className="font-semibold text-muted-foreground">{column.header}</span>
-                                    <span className="text-right break-all">
-                                        {column.accessorFn ? column.accessorFn(item) : String(item[column.accessorKey!] ?? '')}
-                                    </span>
-                                </div>
-                            ))}
-                        </div>
-                        <div className="flex justify-end border-t pt-4">
-                            <Button variant="destructive" size="sm" onClick={(event) => onDelete(event, String(item.id))}>Delete</Button>
-                        </div>
-                    </div>
-                ))}
+                {data.map((item) => tableRow(item, true))}
                 {data.length === 0 && (
                     <div className="text-center text-muted-foreground py-8">No data available.</div>
                 )}
