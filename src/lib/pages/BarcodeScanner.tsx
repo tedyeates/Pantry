@@ -22,7 +22,7 @@ export default function BarcodeScanner() {
     const videoRef = useRef<HTMLVideoElement>(null);
     const [scanning, setScanning] = useState(false);
     const codeReaderRef = useRef<BrowserMultiFormatReader | null>(null);
-    const [scannedItems, setScannedItems] = useState<BarcodeIngredient[]>([]);
+    const [scannedItems, setScannedItems] = useState<Omit<BarcodeIngredient, 'id'>[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const pantryStore = useFirestore<PantryIngredient, FirebaseIngredient>(PANTRY_OBJECT_TYPE);
     const barcodeStore = useFirestore<BarcodeIngredient,BarcodeFirebaseIngredient>(BARCODE_OBJECT_TYPE);
@@ -47,7 +47,7 @@ export default function BarcodeScanner() {
     
             const ingredient = await barcodeStore.getDataById(barcode);
             if (ingredient) {
-                const pantryIngredient = convertFirebaseObject<BarcodeFirebaseIngredient>(ingredient);
+                const pantryIngredient = convertFirebaseObject<BarcodeFirebaseIngredient, BarcodeIngredient>(ingredient);
                 setScannedItems(prevItems => [...prevItems, pantryIngredient]);
             }
             else if (productResult.success) {
@@ -88,7 +88,7 @@ export default function BarcodeScanner() {
     };
 
     const getScannedItem = (
-        items: BarcodeIngredient[],
+        items: Omit<BarcodeIngredient, 'id'>[],
         index: number,
         fieldName: string,
         value: string | number | SupportedObjects[],
@@ -176,7 +176,7 @@ export default function BarcodeScanner() {
                         <CardHeader className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4 pb-2">
                             <div key={barcodeField.name} className="space-y-2 w-full sm:w-auto">
                                 <Label htmlFor={barcodeField.name}>{barcodeField.label}</Label>
-                                <Field<PantryIngredient>
+                                <Field<Omit<BarcodeIngredient, 'id'>>
                                     field={barcodeField}
                                     formData={item}
                                     handleInputChange={(event) => handleInputChange(
@@ -185,8 +185,8 @@ export default function BarcodeScanner() {
                                         event.target.value
                                     )}
                                     handleUnitChange={(fieldName, value) => handleUnitChange(
-                                        scannedItems[index][barcodeField.name as keyof PantryIngredient] as number, 
-                                        scannedItems[index][fieldName as keyof PantryIngredient] as UnitExtended, 
+                                        scannedItems[index][barcodeField.name as keyof Omit<BarcodeIngredient, 'id'>] as number, 
+                                        scannedItems[index][fieldName as keyof Omit<BarcodeIngredient, 'id'>] as UnitExtended, 
                                         value as UnitExtended,
                                         barcodeField,
                                         index
@@ -210,7 +210,7 @@ export default function BarcodeScanner() {
                             {createFields.map((field) => (
                                 <div key={field.name} className="space-y-2">
                                 <Label htmlFor={field.name}>{field.label}</Label>
-                                <Field<PantryIngredient>
+                                <Field<Omit<BarcodeIngredient, 'id'>>
                                     field={field}
                                     formData={item}
                                     handleInputChange={(event) => handleInputChange(
@@ -219,8 +219,8 @@ export default function BarcodeScanner() {
                                         event.target.value
                                     )}
                                     handleUnitChange={(fieldName, value) => handleUnitChange(
-                                        scannedItems[index][field.name as keyof PantryIngredient] as number, 
-                                        scannedItems[index][fieldName as keyof PantryIngredient] as UnitExtended, 
+                                        scannedItems[index][field.name as keyof Omit<BarcodeIngredient, 'id'>] as number, 
+                                        scannedItems[index][fieldName as keyof Omit<BarcodeIngredient, 'id'>] as UnitExtended, 
                                         value as UnitExtended,
                                         field,
                                         index

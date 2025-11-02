@@ -8,7 +8,7 @@ const USER_AGENT = import.meta.env.VITE_USER_AGENT; // Replace with your app's i
 
 export async function getOpenFoodFactsProduct(barcodeNumber: string): Promise<{
     success: boolean, 
-    data?: BarcodeIngredient
+    data?: Omit<BarcodeIngredient, 'id'>
 }> {
     const url = `${OPEN_FOOD_FACTS_API_BASE_URL}${barcodeNumber}`;
     const headers = { 'User-Agent': USER_AGENT };

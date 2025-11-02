@@ -60,7 +60,7 @@ export function useFirestore<T, U extends { id: string }>(objectType: string) {
         }
     }
 
-    async function createData(data: T) {
+    async function createData(data: Omit<T, 'id'>) {
         if (!userId) return;
 
         const collectionRef = collection(
@@ -74,7 +74,7 @@ export function useFirestore<T, U extends { id: string }>(objectType: string) {
         });
     }
 
-    async function createMultipleData(data: T[]) {
+    async function createMultipleData(data: Omit<T, 'id'>[]) {
         if (!userId || data.length === 0) return;
 
         const batch = writeBatch(db);
