@@ -37,7 +37,7 @@ function Page<T extends InternalObject, U extends FirebaseObject>({
     useEffect(() => {
         const unsubscribe = syncData();
         return () => unsubscribe && unsubscribe();
-    }, [object_type, syncData]);
+    }, [syncData]);
 
 
 

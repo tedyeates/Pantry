@@ -9,6 +9,7 @@ import { AuthProvider, useAuth } from './lib/context/Auth';
 import Location from './lib/pages/Location';
 import Shop from './lib/pages/Shop';
 import IngredientType from './lib/pages/IngredientType';
+import ShoppingList from './lib/pages/ShoppingList';
 
 function AppContent() {
     const { user, isAuthReady, signOut } = useAuth();
@@ -28,10 +29,11 @@ function AppContent() {
                 <Button variant="outline" onClick={signOut}>Sign Out</Button>
             </div>
             <Tabs defaultValue="pantry" className="w-full">
-                <TabsList className="grid w-full grid-cols-6 mb-6">
+                <TabsList className="grid w-full grid-cols-7 mb-6">
                     <TabsTrigger value="pantry">Pantry</TabsTrigger>
                     <TabsTrigger value="recipes">Recipe Book</TabsTrigger>
                     <TabsTrigger value="barcode">Barcode Scanner</TabsTrigger>
+                    <TabsTrigger value="shopping-list">Shopping List</TabsTrigger>
                     <TabsTrigger value="location">Location</TabsTrigger>
                     <TabsTrigger value="ingredient-type">Ingredient Type</TabsTrigger>
                     <TabsTrigger value="shop">Shop</TabsTrigger>
@@ -39,6 +41,7 @@ function AppContent() {
                 <TabsContent value="pantry"><Pantry /></TabsContent>
                 <TabsContent value="recipes"><Recipe /></TabsContent>
                 <TabsContent value="barcode"><BarcodeScanner /></TabsContent>
+                <TabsContent value="shopping-list"><ShoppingList /></TabsContent>
                 <TabsContent value="location"><Location /></TabsContent>
                 <TabsContent value="ingredient-type"><IngredientType /></TabsContent>
                 <TabsContent value="shop"><Shop /></TabsContent>

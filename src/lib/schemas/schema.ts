@@ -46,6 +46,14 @@ export type PantryIngredient = Ingredient & InternalObject
 export type FirebaseRecipe = Recipe & FirebaseObject
 export type PantryRecipe = Recipe & InternalObject
 
+export type ShoppingListItem = InternalObject & {
+    name: string;
+    quantity: number;
+    unit: UnitExtended;
+}
+
+export type FirebaseShoppingListItem = FirebaseObject & { name: string; quantity: number; unit: UnitExtended; }
+
 export type BarcodeFirebaseIngredient = FirebaseIngredient & BarcodeData
 export type BarcodeIngredient = PantryIngredient & BarcodeData
 
