@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/table';
 import { convertFirebaseObject } from '@/utils/typeCoversion';
 import type { FirebaseObject, InternalObject } from '../schemas/schema';
+import type { JSX } from 'react';
 
 // Define a generic interface for column definitions
 // T is the type of the data object (e.g., PantryItem, Recipe)
@@ -26,6 +27,7 @@ interface DataTableProps<T, U> {
     data: U[];
     openEditDialog: (item: T) => void;
     deleteData: (id: string) => Promise<void>;
+    additionalActions?: (item: T) => JSX.Element;
 }
 
 
@@ -33,7 +35,8 @@ export function DataTable<T extends InternalObject, U extends FirebaseObject>({
     columns, 
     data,
     openEditDialog,
-    deleteData
+    deleteData,
+    additionalActions
 }: DataTableProps<T, U>) { 
     const onDelete = async (event: React.MouseEvent<HTMLButtonElement>, id: string) => {
         event.stopPropagation();
@@ -58,6 +61,7 @@ export function DataTable<T extends InternalObject, U extends FirebaseObject>({
                     </div>
                     <div className="flex justify-end border-t pt-4">
                         <Button variant="destructive" size="sm" onClick={(event) => onDelete(event, String(convertedItem.id))}>Delete</Button>
+                        {additionalActions && additionalActions(convertedItem)}
                     </div>
                 </div>
             )
@@ -72,6 +76,7 @@ export function DataTable<T extends InternalObject, U extends FirebaseObject>({
                 ))}
                 <TableCell className="text-right">
                     <Button variant="destructive" size="sm" onClick={(event) => onDelete(event, String(item.id))}>Delete</Button>
+                    {additionalActions &&  additionalActions(convertedItem)}
                 </TableCell>
             </TableRow>
         )

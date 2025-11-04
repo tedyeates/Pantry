@@ -1,16 +1,17 @@
 import { DataTable, type ColumnDefinition } from '@/lib/components/Table';
 import type { DialogData, FirebaseObject, FormFieldExtended, InternalObject } from '@/lib/schemas/schema';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type JSX } from 'react';
 import DataDialog from '../components/Dialog';
 import { Button } from '@/components/ui/button';
 import { useFirestore } from '../hooks/useFirestore';
 
 type PageProps<T> = {
-    object_type: string
-    columns: ColumnDefinition<T>[]
-    createFields: FormFieldExtended[]
-    updateFields: FormFieldExtended[]
-    handleSave?: (data: T) => Promise<void>
+    object_type: string;
+    columns: ColumnDefinition<T>[];
+    createFields: FormFieldExtended[];
+    updateFields: FormFieldExtended[];
+    handleSave?: (data: T) => Promise<void>;
+    additionalActions?: (item: T) => JSX.Element;
 }
 // T Pantry Ingredient
 // U Firebase Ingredient
@@ -19,7 +20,8 @@ function Page<T extends InternalObject, U extends FirebaseObject>({
     columns,
     createFields,
     updateFields,
-    handleSave
+    handleSave,
+    additionalActions
 }: PageProps<T>) {
     const [dialog, setDialog] = useState<DialogData<T>>({
         title: '',
@@ -112,6 +114,7 @@ function Page<T extends InternalObject, U extends FirebaseObject>({
                     data={data}
                     openEditDialog={openEditDialog}
                     deleteData={deleteData}
+                    additionalActions={additionalActions}
                 />
             )}
         </>

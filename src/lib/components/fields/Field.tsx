@@ -4,11 +4,12 @@ import FieldInput from "./FieldInput";
 import FieldQuantity from "./FieldQuantity";
 import FieldReduceQuantity from "./FieldReduceQuantity";
 import FieldSelect from "./FieldSelect";
+import FieldTextarea from "./FieldTextarea";
 
 type FieldProps<T> = {
     field: FormFieldExtended;
     formData: T;
-    handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
     handleUnitChange: (fieldName: string, value: string) => void;
     handleSelectChange: (fieldName: string, value: string) => void;
     handleArrayOfObjectsChange: (newValues: SupportedObjects[]) => void;
@@ -71,6 +72,14 @@ export default function Field<T>({
                     field={field}
                     value={formData[field.name as keyof T] as SupportedObjects[]}    
                     handleArrayOfObjectsChange={handleArrayOfObjectsChange}
+                />
+            ),
+            "textarea": (
+                <FieldTextarea<T>
+                    key={field.name}
+                    field={field}
+                    formData={formData}
+                    handleInputChange={handleInputChange}
                 />
             ),
             "default": (

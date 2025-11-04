@@ -15,7 +15,6 @@ export const getUnits = (isStorage: boolean = false) => {
 
     return [
         ...storageUnits,
-        { value: 'unit', label: 'unit(s)' },
         { value: 'Tbs', label: 'tbsp' },
         { value: 'tsp', label: 'tsp' },
         { value: 'cup' , label: 'cup' },

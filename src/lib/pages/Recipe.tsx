@@ -1,3 +1,6 @@
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import type { FirebaseRecipe, FormFieldExtended, Ingredient, PantryRecipe } from "@/lib/schemas/schema";
 import { type ColumnDefinition } from "../components/Table";
 import { getUnits } from "@/utils/options";
@@ -7,6 +10,8 @@ import Page from "../components/Page";
 const RECIPE_OBJECT_TYPE = "recipe"
 
 function Recipe() {
+    const [viewRecipe, setViewRecipe] = useState<PantryRecipe | null>(null);
+
     const recipeColumns: ColumnDefinition<PantryRecipe>[] = [
         { header: "Name", accessorKey: "name" },
         {
@@ -64,9 +69,7 @@ function Recipe() {
                                 {item.instructions && item.instructions.length > 0 && (
                                     <TooltipContent className="p-2 text-left shadow-lg">
                                         <h4 className="font-semibold mb-1 text-sm">Full Instructions</h4>
-                                        <ul className="list-disc list-inside space-y-0.5 text-xs">
-                                            <span className="font-medium">{item.instructions}</span>
-                                        </ul>
+                                        <div className="font-medium whitespace-pre-wrap">{item.instructions}</div>
                                     </TooltipContent>
                                 )}
                                 </span>
@@ -96,7 +99,7 @@ function Recipe() {
             placeholder: 'e.g., 500',
             extraFields: [{
                 name: 'unit', label: 'Unit', type: 'select', 
-                options: getUnits(true)
+                options: getUnits()
             }]
         }
     ]
@@ -117,13 +120,51 @@ function Recipe() {
         },
     ];
 
+    function additionalActions(item: PantryRecipe) {
+        return <Button variant="outline" size="sm" className="ml-2" onClick={(event) => {
+            event.stopPropagation();
+            setViewRecipe(item);
+        }}>View</Button>
+    }
+
     return (
-        <Page<PantryRecipe, FirebaseRecipe>
-            object_type={RECIPE_OBJECT_TYPE}
-            columns={recipeColumns}
-            createFields={defaultRecipeFormFields}
-            updateFields={defaultRecipeFormFields}
-        />
+        <>
+            <Page<PantryRecipe, FirebaseRecipe>
+                object_type={RECIPE_OBJECT_TYPE}
+                columns={recipeColumns}
+                createFields={defaultRecipeFormFields}
+                updateFields={defaultRecipeFormFields}
+                additionalActions={additionalActions}
+            />
+            {viewRecipe && (
+                <Dialog open={!!viewRecipe} onOpenChange={(isOpen) => !isOpen && setViewRecipe(null)}>
+                    <DialogContent className="sm:max-w-[800px]">
+                        <DialogHeader>
+                            <DialogTitle className="text-2xl font-bold">{viewRecipe.name}</DialogTitle>
+                        </DialogHeader>
+                        <div className="mt-4 space-y-6 max-h-[80vh] overflow-y-auto pr-4">
+                            <div>
+                                <h3 className="text-lg font-semibold mb-2 border-b pb-1">Ingredients</h3>
+                                <ul className="list-disc list-inside space-y-1">
+                                    {viewRecipe.ingredients?.map((ingredient, index) => (
+                                        <li key={index}>
+                                            <span className="font-medium">{ingredient.name}</span>
+                                            <span className="text-sm text-muted-foreground ml-1">({ingredient.quantity} {ingredient.unit})</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-semibold mb-2 border-b pb-1">Instructions</h3>
+                                <div className="whitespace-pre-wrap text-sm">
+                                    {viewRecipe.instructions}
+                                </div>
+                            </div>
+                        </div>
+                    </DialogContent>
+                </Dialog>
+            )}
+        </>
     )
 }
 

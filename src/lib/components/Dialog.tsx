@@ -66,7 +66,7 @@ function DataDialog<T>({
         setFormData(newFormData);
     }, [isOpen, fields, getNewFieldData]);
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value, type } = e.target;
 
         setFormData((prevData) => ({
@@ -106,7 +106,7 @@ function DataDialog<T>({
 
     return (
         <Dialog open={isOpen} onOpenChange={() => showModal(false)}>
-            <DialogContent className="sm:max-w-[425px] p-6 rounded-lg shadow-xl">
+            <DialogContent className="sm:max-w-[600px] p-6 rounded-lg shadow-xl">
                 <DialogHeader>
                     <DialogTitle className="text-2xl font-bold text-indigo-700">{title}</DialogTitle>
                     {description && <DialogDescription className="text-gray-600">{description}</DialogDescription>}

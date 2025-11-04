@@ -134,39 +134,41 @@ function FieldArrayOfObjects<T extends SupportedObjects>({
     }
 
     return (
-        <div className="space-y-3">
-            {items.map((item, index) => (
-                <div key={index} className="p-4 border border-gray-200 rounded-lg shadow-sm bg-gray-50/50">
-                    <div className="flex items-end gap-3"> {/* Flex container for sub-fields and button */}
-                        {subFields.map((subField) => (
-                            <div key={subField.name} className="flex-1 space-y-1 min-w-0"> {/* Each sub-field takes space, allows shrinking */}
-                                <Label htmlFor={`${field.name}-${index}-${subField.name}`} className="text-sm font-medium text-gray-700">
-                                    {subField.label}
-                                </Label>
-                                <Field<T>
-                                    field={subField}
-                                    formData={item}
-                                    handleInputChange={(e) => handleItemInputChange(index, e.target.name, e.target.value, subField.type)}
-                                    handleUnitChange={(fieldName, value) => handleUnitChange(index, fieldName, value as UnitExtended)}
-                                    handleSelectChange={(fieldName, value) => handleItemSelectChange(index, fieldName, value)}
-                                    handleArrayOfObjectsChange={handleArrayOfObjectsChange}
-                                    disabled={disabled}
-                                />
-                            </div>
-                        ))}
-                        <Button
-                            type="button"
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => handleRemoveItem(index)}
-                            disabled={disabled}
-                            className="shrink-0" // Prevents button from shrinking too much
-                        >
-                            -
-                        </Button>
+        <div>
+            <div className="max-h-72 overflow-y-auto space-y-3 pr-2 pb-2">
+                {items.map((item, index) => ( // Add a border to all but the last item
+                    <div key={index} className={index < items.length - 1 ? "border-b border-gray-200 pb-3" : ""}>
+                        <div className="flex items-end gap-3"> {/* Flex container for sub-fields and button */}
+                            {subFields.map((subField) => (
+                                <div key={subField.name} className="flex-1 space-y-1 min-w-0"> {/* Each sub-field takes space, allows shrinking */}
+                                    <Label htmlFor={`${field.name}-${index}-${subField.name}`} className="text-sm font-medium text-gray-700">
+                                        {subField.label}
+                                    </Label>
+                                    <Field<T>
+                                        field={subField}
+                                        formData={item}
+                                        handleInputChange={(e) => handleItemInputChange(index, e.target.name, e.target.value, subField.type)}
+                                        handleUnitChange={(fieldName, value) => handleUnitChange(index, fieldName, value as UnitExtended)}
+                                        handleSelectChange={(fieldName, value) => handleItemSelectChange(index, fieldName, value)}
+                                        handleArrayOfObjectsChange={handleArrayOfObjectsChange}
+                                        disabled={disabled}
+                                    />
+                                </div>
+                            ))}
+                            <Button
+                                type="button"
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => handleRemoveItem(index)}
+                                disabled={disabled}
+                                className="shrink-0" // Prevents button from shrinking too much
+                            >
+                                -
+                            </Button>
+                        </div>
                     </div>
-                </div>
-            ))}
+                ))}
+            </div>
             <Button 
                 type="button" 
                 variant="outline" 
@@ -184,4 +186,3 @@ function FieldArrayOfObjects<T extends SupportedObjects>({
 };
 
 export default FieldArrayOfObjects;
-
