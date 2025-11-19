@@ -43,8 +43,6 @@ function FieldArrayOfObjects<T extends SupportedObjects>({
     const handleAddItem = () => {
         if (disabled) return;
         const newItem = createDefaultItem<T>(subFields, {} as T) as T;
-        console.log(subFields)
-        console.log(newItem)
         handleArrayOfObjectsChange([...items, newItem]);
     };
 
@@ -112,14 +110,8 @@ function FieldArrayOfObjects<T extends SupportedObjects>({
         const quantitFieldName = field.extraFields?.[1].name
         if (!quantitFieldName) return
         
-        console.log(quantitFieldName)
-        console.log(subFieldName)
         const oldUnit = currentItem[subFieldName] as UnitExtended;
         const quantity = currentItem[quantitFieldName] as number;
-
-        console.log(oldUnit)
-        console.log(quantity)
-        console.log(selectValue)
 
         const {val, unit} = convertUnit(quantity, oldUnit, selectValue)
         

@@ -9,7 +9,8 @@ import { AuthProvider, useAuth } from './lib/context/Auth';
 import Location from './lib/pages/Location';
 import Shop from './lib/pages/Shop';
 import IngredientType from './lib/pages/IngredientType';
-import ShoppingList from './lib/pages/ShoppingList';
+import IngredientList from './lib/pages/IngredientList';
+import Alias from './lib/pages/Alias';
 
 function AppContent() {
     const { user, isAuthReady, signOut } = useAuth();
@@ -29,22 +30,24 @@ function AppContent() {
                 <Button variant="outline" onClick={signOut}>Sign Out</Button>
             </div>
             <Tabs defaultValue="pantry" className="w-full">
-                <TabsList className="grid w-full grid-cols-7 mb-6">
-                    <TabsTrigger value="pantry">Pantry</TabsTrigger>
-                    <TabsTrigger value="recipes">Recipe Book</TabsTrigger>
-                    <TabsTrigger value="barcode">Barcode Scanner</TabsTrigger>
-                    <TabsTrigger value="shopping-list">Shopping List</TabsTrigger>
-                    <TabsTrigger value="location">Location</TabsTrigger>
-                    <TabsTrigger value="ingredient-type">Ingredient Type</TabsTrigger>
-                    <TabsTrigger value="shop">Shop</TabsTrigger>
+                <TabsList className="grid w-full grid-cols-8 mb-6">
+                    <TabsTrigger value="pantry">🍞Pantry</TabsTrigger>
+                    <TabsTrigger value="recipes">🔪Recipes</TabsTrigger>
+                    <TabsTrigger value="shopping-list">🛒Shopping List</TabsTrigger>
+                    <TabsTrigger value="barcode">Scanner</TabsTrigger>
+                    <TabsTrigger value="location">Locations</TabsTrigger>
+                    <TabsTrigger value="ingredient-type">Ingredient Types</TabsTrigger>
+                    <TabsTrigger value="shop">Shops</TabsTrigger>
+                    <TabsTrigger value="alias">Alias</TabsTrigger>
                 </TabsList>
                 <TabsContent value="pantry"><Pantry /></TabsContent>
                 <TabsContent value="recipes"><Recipe /></TabsContent>
                 <TabsContent value="barcode"><BarcodeScanner /></TabsContent>
-                <TabsContent value="shopping-list"><ShoppingList /></TabsContent>
+                <TabsContent value="shopping-list"><IngredientList /></TabsContent>
                 <TabsContent value="location"><Location /></TabsContent>
                 <TabsContent value="ingredient-type"><IngredientType /></TabsContent>
                 <TabsContent value="shop"><Shop /></TabsContent>
+                <TabsContent value="alias"><Alias /></TabsContent>
             </Tabs>
         </main>
     )

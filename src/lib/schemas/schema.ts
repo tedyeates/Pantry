@@ -51,8 +51,15 @@ export type ShoppingListItem = InternalObject & {
     quantity: number;
     unit: UnitExtended;
 }
-
 export type FirebaseShoppingListItem = FirebaseObject & { name: string; quantity: number; unit: UnitExtended; }
+
+type Alias = {
+    name: string;
+    alias: string[];
+    substitute: string[]; // Should be many to many field
+}
+export type PantryAlias = InternalObject & Alias
+export type FirebaseAlias = FirebaseObject & Alias
 
 export type BarcodeFirebaseIngredient = FirebaseIngredient & BarcodeData
 export type BarcodeIngredient = PantryIngredient & BarcodeData

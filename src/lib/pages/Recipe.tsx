@@ -52,33 +52,7 @@ function Recipe() {
                 );
             }
         },
-        { 
-            header: "Instructions", 
-            accessorKey: "instructions",
-            accessorFn: (item) => {
-                const displaySummary = item.instructions?.length > 40
-                    ? `${item.instructions.substring(0, 37)}...`
-                    : item.instructions || 'N/A';
-
-                return (
-                    <TooltipProvider>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <span>
-                                {displaySummary}
-                                {item.instructions && item.instructions.length > 0 && (
-                                    <TooltipContent className="p-2 text-left shadow-lg">
-                                        <h4 className="font-semibold mb-1 text-sm">Full Instructions</h4>
-                                        <div className="font-medium whitespace-pre-wrap">{item.instructions}</div>
-                                    </TooltipContent>
-                                )}
-                                </span>
-                            </TooltipTrigger>
-                        </Tooltip>
-                    </TooltipProvider>
-                );
-            }
-        },
+        { header: "Created Date", accessorFn: (row) => row.createdDate.toLocaleDateString() },
     ];
 
     const ingredientSubFields: FormFieldExtended[] = [
@@ -111,7 +85,7 @@ function Recipe() {
         },
         {
             name: 'ingredients', label: 'Ingredients', type: 'arrayOfObjects', 
-            required: true, relatedCollection: 'pantry', extraFields: ingredientSubFields
+            required: true, extraFields: ingredientSubFields
         },
         {
             name: 'instructions', label: 'Instructions', type: 'textarea', 
